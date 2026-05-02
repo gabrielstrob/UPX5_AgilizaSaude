@@ -1,0 +1,16 @@
+@import "tailwindcss";
+@config "../tailwind.config.js";
+
+@layer utilities {
+  .pb-safe { padding-bottom: env(safe-area-inset-bottom, 20px); }
+  .pt-safe { padding-top: env(safe-area-inset-top, 0px); }
+}
+
+html, body {
+  min-height: max(884px, 100dvh);
+}
+
+body {
+  @apply bg-background text-on-background min-h-screen flex flex-col font-body-md text-body-md;
+  padding-top: env(safe-area-inset-top, 0px);
+}
