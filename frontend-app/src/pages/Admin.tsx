@@ -79,7 +79,7 @@ export default function Admin() {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: number) => {
     if (!window.confirm('Tem certeza que deseja excluir esta clínica permanentemente?')) return;
     
     try {

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Conecta Odonto</string>
+    <string name="title_activity_main">Conecta Odonto</string>
+    <string name="package_name">com.conectaodonto.app</string>
+    <string name="custom_url_scheme">com.conectaodonto.app</string>
+</resources>
