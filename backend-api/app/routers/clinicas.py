@@ -127,10 +127,14 @@ def importar_place_google(place_id: str, db: Session = Depends(database.get_db),
     if "photos" in detalhes and len(detalhes["photos"]) > 0:
         photo_ref = detalhes["photos"][0].get("photo_reference")
         if photo_ref:
+            import logging
             from ..services.google_places import GOOGLE_PLACES_API_KEY
             from ..services.image_storage import download_and_upload_image
             google_photo_url = f"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photoreference={photo_ref}&key={GOOGLE_PLACES_API_KEY}"
-            foto_url = download_and_upload_image(google_photo_url, nome)
+            try:
+                foto_url = download_and_upload_image(google_photo_url, nome)
+            except Exception as e:
+                logging.getLogger(__name__).warning(f"Falha ao salvar imagem no Storage para '{nome}': {e}")
 
     # Verifica se já existe clínica com esse mesmo nome no banco
     from .. import models
