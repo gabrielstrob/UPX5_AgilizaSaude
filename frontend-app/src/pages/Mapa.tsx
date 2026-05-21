@@ -88,21 +88,30 @@ export default function Mapa() {
         normalized
       ].filter(Boolean);
       const query = queryParts.join(', ');
-      const nominatimUrl = new URL('https://nominatim.openstreetmap.org/search');
-      nominatimUrl.searchParams.set('format', 'json');
-      nominatimUrl.searchParams.set('limit', '1');
-      nominatimUrl.searchParams.set('countrycodes', 'br');
-      nominatimUrl.searchParams.set('q', query || normalized);
 
-      const nominatimResponse = await fetch(nominatimUrl.toString(), {
-        headers: { 'Accept-Language': 'pt-BR' }
-      });
+      const fetchNominatim = async (q: string) => {
+        const nominatimUrl = new URL('https://nominatim.openstreetmap.org/search');
+        nominatimUrl.searchParams.set('format', 'json');
+        nominatimUrl.searchParams.set('limit', '1');
+        nominatimUrl.searchParams.set('countrycodes', 'br');
+        nominatimUrl.searchParams.set('q', q);
 
-      if (!nominatimResponse.ok) {
-        throw new Error('Falha ao localizar CEP.');
+        const response = await fetch(nominatimUrl.toString(), {
+          headers: { 'Accept-Language': 'pt-BR' }
+        });
+
+        if (!response.ok) {
+          throw new Error('Falha ao localizar CEP.');
+        }
+
+        return response.json();
+      };
+
+      let results = await fetchNominatim(query || normalized);
+      if (!Array.isArray(results) || results.length === 0) {
+        results = await fetchNominatim(normalized);
       }
 
-      const results = await nominatimResponse.json();
       if (!Array.isArray(results) || results.length === 0) {
         throw new Error('Nao foi possivel localizar esse CEP.');
       }

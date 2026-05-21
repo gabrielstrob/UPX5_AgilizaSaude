@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabase'
 
-const BASE_URL = 'http://127.0.0.1:8000/api'
+const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000/api'
 
 async function getHeaders(): Promise<Record<string, string>> {
   const { data: { session } } = await supabase.auth.getSession()
