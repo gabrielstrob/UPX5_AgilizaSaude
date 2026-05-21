@@ -123,13 +123,14 @@ def importar_place_google(place_id: str, db: Session = Depends(database.get_db),
     avaliacao_media = detalhes.get("rating", 0.0)
     total_avaliacoes = detalhes.get("user_ratings_total", 0)
 
-    # Verifica se há fotos disponíveis para construir a URL
     foto_url = None
     if "photos" in detalhes and len(detalhes["photos"]) > 0:
         photo_ref = detalhes["photos"][0].get("photo_reference")
         if photo_ref:
             from ..services.google_places import GOOGLE_PLACES_API_KEY
-            foto_url = f"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photoreference={photo_ref}&key={GOOGLE_PLACES_API_KEY}"
+            from ..services.image_storage import download_and_upload_image
+            google_photo_url = f"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photoreference={photo_ref}&key={GOOGLE_PLACES_API_KEY}"
+            foto_url = download_and_upload_image(google_photo_url, nome)
 
     # Verifica se já existe clínica com esse mesmo nome no banco
     from .. import models

@@ -60,10 +60,10 @@ export default function Triagem() {
           <div>
             <h3 className="font-h2 text-h2 mb-2">Emergência Grave?</h3>
             <p className="font-body-md text-body-md mb-4">Se você estiver com dificuldade para respirar, inchaço no rosto ou febre alta, procure o hospital imediatamente ou ligue para o SAMU.</p>
-            <button className="bg-white text-tertiary-container font-button text-button py-2 px-6 rounded-full shadow-sm hover:bg-slate-50 transition-colors flex items-center gap-2">
+            <a href="tel:192" className="bg-white text-tertiary-container font-button text-button py-2 px-6 rounded-full shadow-sm hover:bg-slate-50 transition-colors flex items-center gap-2">
               <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>call</span>
               Ligar 192
-            </button>
+            </a>
           </div>
         </div>
       </section>

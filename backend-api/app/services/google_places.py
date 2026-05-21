@@ -1,10 +1,15 @@
 import os
+import logging
 import requests
 from dotenv import load_dotenv
 
 load_dotenv()
 
+logger = logging.getLogger(__name__)
+
 GOOGLE_PLACES_API_KEY = os.getenv("GOOGLE_PLACES_API_KEY")
+
+logger.info(f"GOOGLE_PLACES_API_KEY carregada: {'***' + GOOGLE_PLACES_API_KEY[-6:] if GOOGLE_PLACES_API_KEY else 'NONE'}")
 
 def search_places(query: str):
     """
@@ -17,12 +22,23 @@ def search_places(query: str):
     params = {
         "query": query,
         "key": GOOGLE_PLACES_API_KEY,
-        "language": "pt-BR",
-        "type": "hospital|health|dentist" # Preferência para estabelecimentos de saúde
+        "language": "pt-BR"
     }
     response = requests.get(url, params=params)
     response.raise_for_status()
-    return response.json().get("results", [])
+    
+    data = response.json()
+    status = data.get("status", "UNKNOWN")
+    error_message = data.get("error_message", "")
+    
+    logger.info(f"[Places API] search_places('{query}') -> status: {status}, results: {len(data.get('results', []))}")
+    if error_message:
+        logger.error(f"[Places API] error_message: {error_message}")
+    
+    if status != "OK" and status != "ZERO_RESULTS":
+        raise ValueError(f"Google Places API erro: status={status}, message={error_message}")
+    
+    return data.get("results", [])
 
 def get_place_details(place_id: str):
     """
@@ -40,4 +56,16 @@ def get_place_details(place_id: str):
     }
     response = requests.get(url, params=params)
     response.raise_for_status()
-    return response.json().get("result", {})
+    
+    data = response.json()
+    status = data.get("status", "UNKNOWN")
+    error_message = data.get("error_message", "")
+    
+    logger.info(f"[Places API] get_place_details('{place_id}') -> status: {status}")
+    if error_message:
+        logger.error(f"[Places API] error_message: {error_message}")
+    
+    if status != "OK":
+        raise ValueError(f"Google Places API erro: status={status}, message={error_message}")
+    
+    return data.get("result", {})

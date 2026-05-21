@@ -8,6 +8,7 @@ export interface Clinica {
   telefone: string;
   aberto_24h: boolean;
   horarios: Record<string, string>;
+  foto_url: string | null;
   avaliacao_media: number;
   total_avaliacoes: number;
   latitude: number;

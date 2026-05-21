@@ -11,11 +11,7 @@ export default function Layout() {
           <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>health_and_safety</span>
           <span className="font-manrope font-bold text-lg tracking-tight">Conecta Odonto</span>
         </div>
-        <div>
-          <div className="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center overflow-hidden border border-outline-variant">
-            <span className="material-symbols-outlined text-outline">person</span>
-          </div>
-        </div>
+
       </header>
 
       <main className="flex-grow relative mt-16 mb-[80px] md:mb-0 md:ml-64">
