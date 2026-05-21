@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import { Link } from 'react-router-dom';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { useClinicas, type Clinica } from '../hooks/useClinicas';
+import { useLocation } from '../contexts/LocationContext';
 
-// Fix for default marker icon in react-leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
@@ -20,19 +20,14 @@ function MapUpdater({ center }: { center: [number, number] }) {
 }
 
 export default function Mapa() {
-  const { clinicas, loading, error, userLocation, refetch, setManualLocation } = useClinicas(50000); // Busca global
-  const [activeClinica, setActiveClinica] = useState<Clinica | null>(null);
+  const { clinicas, loading, error, userLocation, refetch } = useClinicas(50000);
+  const { setManualLocation, resetToGps, cepApplied } = useLocation();
+  const [manualSelection, setManualSelection] = useState<Clinica | null>(null);
   const [cep, setCep] = useState('');
   const [cepError, setCepError] = useState<string | null>(null);
   const [cepLoading, setCepLoading] = useState(false);
-  const [cepApplied, setCepApplied] = useState<string | null>(null);
 
-  // Se a clínica ativa não estiver setada e temos resultados, seta a primeira (mais próxima)
-  useEffect(() => {
-    if (clinicas.length > 0 && !activeClinica) {
-      setActiveClinica(clinicas[0]);
-    }
-  }, [clinicas, activeClinica]);
+  const activeClinica = manualSelection || (clinicas.length > 0 ? clinicas[0] : null);
 
   if (loading || !userLocation) {
     return (
@@ -122,9 +117,8 @@ export default function Mapa() {
         throw new Error('Localizacao invalida para o CEP.');
       }
 
-      setManualLocation(lat, lng);
-      setActiveClinica(null);
-      setCepApplied(normalized);
+      setManualLocation(lat, lng, normalized);
+      setManualSelection(null);
     } catch (err: any) {
       setCepError(err?.message ?? 'Erro ao localizar CEP.');
     } finally {
@@ -150,7 +144,7 @@ export default function Mapa() {
             key={clinica.id} 
             position={[clinica.latitude, clinica.longitude]}
             eventHandlers={{
-              click: () => setActiveClinica(clinica),
+              click: () => setManualSelection(clinica),
             }}
           >
             <Popup>{clinica.nome}</Popup>
@@ -186,7 +180,7 @@ export default function Mapa() {
       {/* Floating Controls (Top Right) */}
       <div className="absolute top-container-padding right-container-padding z-[400] flex flex-col gap-unit">
         <button 
-          onClick={refetch}
+          onClick={resetToGps}
           className="w-12 h-12 bg-surface text-on-surface rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.06)] flex items-center justify-center hover:bg-surface-container-low transition-colors border border-outline-variant/30"
         >
           <span className="material-symbols-outlined">my_location</span>

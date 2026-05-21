@@ -42,6 +42,7 @@ pnpm-debug.log*
 *.sw?
 *.swp
 *~
+.kilo/*
 
 # OS
 .DS_Store

@@ -7,14 +7,7 @@ export default function Triagem() {
         <p className="font-body-lg text-body-lg text-on-surface-variant">Encontre a unidade de saúde pública mais próxima para o seu caso.</p>
       </section>
 
-      <section className="relative">
-        <div className="relative flex items-center bg-surface-container-lowest rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.06)] border-2 border-surface-container-highest focus-within:border-primary transition-colors duration-200">
-          <span className="material-symbols-outlined absolute left-4 text-outline">search</span>
-          <input className="w-full bg-transparent border-none py-4 pl-12 pr-4 font-body-lg text-body-lg text-on-surface focus:ring-0 placeholder-outline-variant outline-none" placeholder="Descreva seu sintoma ou unidade..." type="text"/>
-        </div>
-      </section>
-
-      <section className="space-y-stack-md">
+<section className="space-y-stack-md">
         <h2 className="font-h2 text-h2 text-on-surface">Sintomas Comuns</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-gutter">
           <button className="bg-secondary text-on-secondary rounded-xl p-stack-md flex flex-col items-start gap-stack-sm shadow-[0_8px_24px_rgba(186,26,26,0.12)] hover:opacity-90 transition-opacity text-left">

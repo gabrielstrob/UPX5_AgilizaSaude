@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
+import { LocationProvider } from './contexts/LocationContext'
 import Layout from './components/Layout'
 import Mapa from './pages/Mapa'
 import Unidades from './pages/Unidades'
@@ -13,6 +14,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <LocationProvider>
         <Routes>
           <Route path="/" element={<Layout />}>
             <Route index element={<Mapa />} />
@@ -25,6 +27,7 @@ export default function App() {
           </Route>
           <Route path="/login" element={<Login />} />
         </Routes>
+        </LocationProvider>
       </AuthProvider>
     </BrowserRouter>
   )
