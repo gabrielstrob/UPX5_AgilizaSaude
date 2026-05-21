@@ -22,34 +22,49 @@ export function useClinicas(raio_km: number = 10) {
   const [error, setError] = useState<string | null>(null);
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
 
+  const BRASIL_BOUNDS = { latMin: -33.75, latMax: 5.27, lngMin: -73.99, lngMax: -34.79 };
+
+  const isCoordInBrasil = (lat: number, lng: number) => {
+    return (
+      lat >= BRASIL_BOUNDS.latMin && lat <= BRASIL_BOUNDS.latMax &&
+      lng >= BRASIL_BOUNDS.lngMin && lng <= BRASIL_BOUNDS.lngMax
+    );
+  };
+
+  const FALLBACK_LAT = -23.5015;
+  const FALLBACK_LNG = -47.4526;
+
   useEffect(() => {
-    // 1. Tentar pegar a localização do usuário
-    if ('geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const lat = position.coords.latitude;
-          const lng = position.coords.longitude;
-          console.log("Geolocalização:", lat, lng, "Accuracy:", position.coords.accuracy);
-          setUserLocation([lat, lng]);
-          fetchClinicas(lat, lng);
-        },
-        (err) => {
-          console.warn("Erro de localização:", err.message, "Usando fallback.");
-          // Fallback para Av. Paulista se negar/falhar
-          const fallbackLat = -23.5015;
-          const fallbackLng = -47.4526;
-          setUserLocation([fallbackLat, fallbackLng]);
-          fetchClinicas(fallbackLat, fallbackLng);
-        },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 } // Adicionando timeout de 5 segundos para não ficar preso
-      );
-    } else {
-       // Sem suporte
-       const fallbackLat = -23.5015;
-       const fallbackLng = -47.4526;
-       setUserLocation([fallbackLat, fallbackLng]);
-       fetchClinicas(fallbackLat, fallbackLng);
+    if (!('geolocation' in navigator)) {
+      setUserLocation([FALLBACK_LAT, FALLBACK_LNG]);
+      fetchClinicas(FALLBACK_LAT, FALLBACK_LNG);
+      return;
     }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        let lat = position.coords.latitude;
+        let lng = position.coords.longitude;
+        const accuracy = position.coords.accuracy;
+
+        console.log("Geolocalização:", lat, lng, "Accuracy:", accuracy);
+
+        if (!isCoordInBrasil(lat, lng) || accuracy > 50000) {
+          console.warn("Localização imprecisa ou fora do Brasil. Usando fallback.");
+          lat = FALLBACK_LAT;
+          lng = FALLBACK_LNG;
+        }
+
+        setUserLocation([lat, lng]);
+        fetchClinicas(lat, lng);
+      },
+      (err) => {
+        console.warn("Erro de localização:", err.message, "Usando fallback.");
+        setUserLocation([FALLBACK_LAT, FALLBACK_LNG]);
+        fetchClinicas(FALLBACK_LAT, FALLBACK_LNG);
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+    );
   }, [raio_km]);
 
   const fetchClinicas = async (lat: number, lng: number) => {
@@ -65,5 +80,17 @@ export function useClinicas(raio_km: number = 10) {
     }
   };
 
-  return { clinicas, loading, error, userLocation, refetch: () => userLocation && fetchClinicas(userLocation[0], userLocation[1]) };
+  const setManualLocation = (lat: number, lng: number) => {
+    setUserLocation([lat, lng]);
+    fetchClinicas(lat, lng);
+  };
+
+  return {
+    clinicas,
+    loading,
+    error,
+    userLocation,
+    setManualLocation,
+    refetch: () => userLocation && fetchClinicas(userLocation[0], userLocation[1])
+  };
 }

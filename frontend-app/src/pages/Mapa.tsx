@@ -20,8 +20,12 @@ function MapUpdater({ center }: { center: [number, number] }) {
 }
 
 export default function Mapa() {
-  const { clinicas, loading, error, userLocation, refetch } = useClinicas(50000); // Busca global
+  const { clinicas, loading, error, userLocation, refetch, setManualLocation } = useClinicas(50000); // Busca global
   const [activeClinica, setActiveClinica] = useState<Clinica | null>(null);
+  const [cep, setCep] = useState('');
+  const [cepError, setCepError] = useState<string | null>(null);
+  const [cepLoading, setCepLoading] = useState(false);
+  const [cepApplied, setCepApplied] = useState<string | null>(null);
 
   // Se a clínica ativa não estiver setada e temos resultados, seta a primeira (mais próxima)
   useEffect(() => {
@@ -53,6 +57,72 @@ export default function Mapa() {
     );
   }
 
+  const normalizeCep = (value: string) => value.replace(/\D/g, '').slice(0, 8);
+
+  const handleCepSubmit = async () => {
+    const normalized = normalizeCep(cep);
+    if (normalized.length !== 8) {
+      setCepError('Digite um CEP valido com 8 numeros.');
+      return;
+    }
+
+    setCepLoading(true);
+    setCepError(null);
+
+    try {
+      const viaCepResponse = await fetch(`https://viacep.com.br/ws/${normalized}/json/`);
+      if (!viaCepResponse.ok) {
+        throw new Error('Falha ao consultar CEP.');
+      }
+
+      const viaCepData = await viaCepResponse.json();
+      if (viaCepData.erro) {
+        throw new Error('CEP nao encontrado.');
+      }
+
+      const queryParts = [
+        viaCepData.logradouro,
+        viaCepData.bairro,
+        viaCepData.localidade,
+        viaCepData.uf,
+        normalized
+      ].filter(Boolean);
+      const query = queryParts.join(', ');
+      const nominatimUrl = new URL('https://nominatim.openstreetmap.org/search');
+      nominatimUrl.searchParams.set('format', 'json');
+      nominatimUrl.searchParams.set('limit', '1');
+      nominatimUrl.searchParams.set('countrycodes', 'br');
+      nominatimUrl.searchParams.set('q', query || normalized);
+
+      const nominatimResponse = await fetch(nominatimUrl.toString(), {
+        headers: { 'Accept-Language': 'pt-BR' }
+      });
+
+      if (!nominatimResponse.ok) {
+        throw new Error('Falha ao localizar CEP.');
+      }
+
+      const results = await nominatimResponse.json();
+      if (!Array.isArray(results) || results.length === 0) {
+        throw new Error('Nao foi possivel localizar esse CEP.');
+      }
+
+      const lat = Number(results[0].lat);
+      const lng = Number(results[0].lon);
+      if (Number.isNaN(lat) || Number.isNaN(lng)) {
+        throw new Error('Localizacao invalida para o CEP.');
+      }
+
+      setManualLocation(lat, lng);
+      setActiveClinica(null);
+      setCepApplied(normalized);
+    } catch (err: any) {
+      setCepError(err?.message ?? 'Erro ao localizar CEP.');
+    } finally {
+      setCepLoading(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 top-16 bottom-[80px] md:bottom-0 md:left-64 z-0 bg-surface-container">
       <MapContainer center={userLocation} zoom={13} zoomControl={false} style={{ height: '100%', width: '100%' }} className="leaflet-container">
@@ -78,6 +148,31 @@ export default function Mapa() {
           </Marker>
         ))}
       </MapContainer>
+
+      {/* CEP Input */}
+      <div className="absolute top-container-padding left-container-padding z-[401] w-[min(360px,100%-2rem)] bg-surface/95 backdrop-blur-md border border-outline-variant/30 rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.08)] p-3">
+        <div className="flex items-center gap-2">
+          <input
+            value={cep}
+            onChange={(event) => setCep(normalizeCep(event.target.value))}
+            onKeyDown={(event) => event.key === 'Enter' && handleCepSubmit()}
+            placeholder="Digite seu CEP"
+            inputMode="numeric"
+            className="flex-1 bg-surface-container-low text-on-surface px-3 py-2 rounded-lg border border-outline-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/40"
+          />
+          <button
+            onClick={handleCepSubmit}
+            disabled={cepLoading}
+            className="px-3 py-2 rounded-lg bg-primary text-on-primary font-button text-button disabled:opacity-60"
+          >
+            {cepLoading ? '...' : 'Usar CEP'}
+          </button>
+        </div>
+        {cepError && <p className="text-error text-xs mt-2">{cepError}</p>}
+        {cepApplied && !cepError && (
+          <p className="text-outline text-xs mt-2">Localizacao definida pelo CEP {cepApplied}.</p>
+        )}
+      </div>
 
       {/* Floating Controls (Top Right) */}
       <div className="absolute top-container-padding right-container-padding z-[400] flex flex-col gap-unit">
