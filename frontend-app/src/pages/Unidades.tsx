@@ -1,30 +1,110 @@
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useClinicas } from '../hooks/useClinicas';
 
+type SortMode = 'distance' | 'wait' | 'rating';
+
 export default function Unidades() {
   const { clinicas, loading, error, refetch } = useClinicas(50000);
+  const [search, setSearch] = useState('');
+  const [filter24h, setFilter24h] = useState(false);
+  const [sortBy, setSortBy] = useState<SortMode>('distance');
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const filterRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (filterRef.current && !filterRef.current.contains(e.target as Node)) {
+        setFiltersOpen(false);
+      }
+    }
+    if (filtersOpen) document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [filtersOpen]);
+
+  const filtered = useMemo(() => {
+    let list = [...clinicas];
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      list = list.filter(c => c.nome.toLowerCase().includes(q) || c.endereco.toLowerCase().includes(q));
+    }
+    if (filter24h) list = list.filter(c => c.aberto_24h);
+    if (sortBy === 'distance') list.sort((a, b) => a.distancia_km - b.distancia_km);
+    else if (sortBy === 'wait') list.sort((a, b) => a.tempo_espera_minutos - b.tempo_espera_minutos);
+    else if (sortBy === 'rating') list.sort((a, b) => b.avaliacao_media - a.avaliacao_media);
+    return list;
+  }, [clinicas, search, filter24h, sortBy]);
+
+  const hasActiveFilters = filter24h || sortBy !== 'distance';
 
   return (
     <div className="min-h-screen bg-surface-container pt-container-padding pb-[80px] px-container-padding">
-      {/* Header */}
       <div className="mb-stack-md">
         <h1 className="font-h1 text-h1 text-on-surface mb-2">Unidades Próximas</h1>
         <p className="text-outline text-body-lg">Encontre atendimento odontológico na sua região.</p>
       </div>
 
-      {/* Search and Filter */}
-      <div className="flex gap-2 mb-stack-lg">
+      <div className="flex gap-2 mb-stack-lg relative">
         <div className="flex-1 bg-surface rounded-full flex items-center px-4 h-14 shadow-sm border border-outline-variant/30 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all">
           <span className="material-symbols-outlined text-outline mr-2">search</span>
           <input 
             type="text" 
             placeholder="Buscar por nome ou região..." 
+            value={search}
+            onChange={e => setSearch(e.target.value)}
             className="bg-transparent border-none outline-none w-full text-on-surface placeholder:text-outline"
           />
+          {search && (
+            <button onClick={() => setSearch('')} className="ml-1">
+              <span className="material-symbols-outlined text-outline text-[20px]">close</span>
+            </button>
+          )}
         </div>
-        <button className="w-14 h-14 bg-surface text-on-surface rounded-full shadow-sm border border-outline-variant/30 flex items-center justify-center hover:bg-surface-container-low transition-colors">
+        <button 
+          onClick={() => setFiltersOpen(v => !v)}
+          className={`w-14 h-14 rounded-full shadow-sm border flex items-center justify-center transition-colors ${hasActiveFilters ? 'bg-primary text-on-primary border-primary' : 'bg-surface text-on-surface border-outline-variant/30 hover:bg-surface-container-low'}`}
+        >
           <span className="material-symbols-outlined">tune</span>
         </button>
+
+        {filtersOpen && (
+          <div ref={filterRef} className="absolute top-16 right-0 z-50 bg-surface rounded-xl shadow-lg border border-outline-variant/30 p-4 w-64 animate-in">
+            <p className="font-semibold text-on-surface mb-3 text-sm">Ordenar por</p>
+            <div className="flex flex-col gap-2 mb-4">
+              {([
+                ['distance', 'Mais próximas', 'location_on'],
+                ['wait', 'Menor espera', 'schedule'],
+                ['rating', 'Melhor avaliação', 'star'],
+              ] as const).map(([key, label, icon]) => (
+                <button
+                  key={key}
+                  onClick={() => setSortBy(key)}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${sortBy === key ? 'bg-primary-container text-on-primary-container font-semibold' : 'text-on-surface hover:bg-surface-container'}`}
+                >
+                  <span className="material-symbols-outlined text-[18px]">{icon}</span>
+                  {label}
+                </button>
+              ))}
+            </div>
+            <div className="border-t border-outline-variant/30 pt-3">
+              <button
+                onClick={() => setFilter24h(v => !v)}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm w-full transition-colors ${filter24h ? 'bg-primary-container text-on-primary-container font-semibold' : 'text-on-surface hover:bg-surface-container'}`}
+              >
+                <span className="material-symbols-outlined text-[18px]">nightlight</span>
+                24 Horas
+              </button>
+            </div>
+            {hasActiveFilters && (
+              <button
+                onClick={() => { setFilter24h(false); setSortBy('distance'); }}
+                className="mt-3 w-full text-center text-sm text-primary font-semibold py-1 hover:underline"
+              >
+                Limpar filtros
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* States (Loading/Error) */}
@@ -46,16 +126,16 @@ export default function Unidades() {
       )}
 
       {/* Clinic List */}
-      {!loading && !error && clinicas.length === 0 && (
+      {!loading && !error && filtered.length === 0 && (
         <div className="text-center py-10">
           <span className="material-symbols-outlined text-[48px] text-outline-variant mb-4 opacity-50">location_off</span>
-          <p className="text-on-surface font-medium">Nenhuma clínica encontrada no momento.</p>
+          <p className="text-on-surface font-medium">{search || hasActiveFilters ? 'Nenhuma clínica corresponde aos filtros.' : 'Nenhuma clínica encontrada no momento.'}</p>
         </div>
       )}
 
-      {!loading && !error && clinicas.length > 0 && (
+      {!loading && !error && filtered.length > 0 && (
         <div className="flex flex-col gap-stack-sm">
-          {clinicas.map((clinica) => (
+          {filtered.map((clinica) => (
             <Link to={`/clinicas/${clinica.id}`} key={clinica.id} className="bg-surface rounded-xl p-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-outline-variant/20 hover:shadow-md transition-shadow active:scale-[0.98] flex flex-col md:flex-row gap-4">
               {clinica.foto_url ? (
                 <img src={clinica.foto_url} alt="" className="w-full md:w-32 h-32 object-cover rounded-lg shrink-0" />

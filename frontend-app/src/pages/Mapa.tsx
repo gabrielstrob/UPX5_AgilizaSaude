@@ -172,7 +172,7 @@ export default function Mapa() {
 
   return (
     <div className="fixed inset-0 top-16 bottom-0 md:left-64 z-0 bg-surface-container">
-      <MapContainer center={userLocation} zoom={13} zoomControl={false} style={{ height: '100%', width: '100%' }} className="leaflet-container">
+      <MapContainer center={userLocation} zoom={14} zoomControl={false} style={{ height: '100%', width: '100%' }} className="leaflet-container">
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -197,7 +197,7 @@ export default function Mapa() {
       </MapContainer>
 
       {/* CEP Input */}
-      <div className="absolute top-container-padding left-container-padding z-[401] w-[calc(100%-2rem)] max-w-[360px] max-sm:max-w-none bg-surface/95 backdrop-blur-md border border-outline-variant/30 rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.08)] p-3">
+      <div className="absolute top-container-padding left-container-padding right-container-padding z-[401] max-w-[360px] max-sm:max-w-none bg-surface/95 backdrop-blur-md border border-outline-variant/30 rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.08)] p-3">
         <div className="flex items-center gap-2">
           <input
             value={cep}
@@ -222,7 +222,7 @@ export default function Mapa() {
       </div>
 
       {/* Floating Controls (Top Right) */}
-      <div className="absolute top-container-padding right-container-padding max-sm:top-[132px] z-[400] flex flex-col gap-unit">
+      <div className={`absolute top-container-padding right-container-padding ${cepApplied ? 'max-sm:top-[120px]' : 'max-sm:top-[96px]'} z-[400] flex flex-col gap-unit`}>
         <button 
           onClick={resetToGps}
           className="w-12 h-12 bg-surface text-on-surface rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.06)] flex items-center justify-center hover:bg-surface-container-low transition-colors border border-outline-variant/30"
