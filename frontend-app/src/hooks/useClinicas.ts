@@ -21,6 +21,8 @@ export interface Clinica {
   distancia_km: number;
   lotacao_status: string;
   lotacao_nivel: number;
+  google_place_id?: string | null;
+  lotacao_atualizada_em?: string | null;
 }
 
 export function useClinicas(raio_km: number = 10) {

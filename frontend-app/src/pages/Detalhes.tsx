@@ -4,6 +4,26 @@ import { api } from '../services/api';
 import { type Clinica } from '../hooks/useClinicas';
 import { getLotacaoStyle } from '../utils/lotacao';
 
+const formatarUltimaAtualizacao = (dataStr: string | null | undefined) => {
+  if (!dataStr) return null;
+  try {
+    const data = new Date(dataStr);
+    const agora = new Date();
+    const diffMs = agora.getTime() - data.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    
+    if (diffMins < 1) return "Atualizado agora";
+    if (diffMins < 60) return `Atualizado há ${diffMins} min`;
+    
+    const diffHoras = Math.floor(diffMins / 60);
+    if (diffHoras < 24) return `Atualizado há ${diffHoras} ${diffHoras === 1 ? 'hora' : 'horas'}`;
+    
+    return `Atualizado em ${data.toLocaleDateString('pt-BR')} às ${data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+  } catch (e) {
+    return null;
+  }
+};
+
 export default function Detalhes() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
@@ -116,12 +136,35 @@ export default function Detalhes() {
                   </span>
                 </div>
                 <div>
-                  <span className="block font-body-lg text-body-lg text-on-surface font-semibold">
-                    {clinica.lotacao_status}
-                  </span>
-                  <span className="block font-body-sm text-[13px] text-on-surface-variant leading-tight">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-body-lg text-body-lg text-on-surface font-semibold">
+                      {clinica.lotacao_status}
+                    </span>
+                    {clinica.google_place_id ? (
+                      <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold uppercase tracking-wider border border-emerald-500/20">
+                        Tempo Real
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-surface-container-high text-outline text-[10px] font-bold uppercase tracking-wider border border-outline-variant/30">
+                        Simulado
+                      </span>
+                    )}
+                  </div>
+                  <span className="block font-body-sm text-[13px] text-on-surface-variant leading-tight mt-1">
                     Frequência de clientes atual em comparação com a média normal para este horário.
                   </span>
+                  {clinica.google_place_id && clinica.lotacao_atualizada_em && (
+                    <span className="block text-[11px] text-primary font-medium mt-2 flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[14px] animate-pulse">sync</span>
+                      {formatarUltimaAtualizacao(clinica.lotacao_atualizada_em)}
+                    </span>
+                  )}
+                  {!clinica.google_place_id && (
+                    <span className="block text-[11px] text-outline font-medium mt-2 flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[14px]">schedule</span>
+                      Simulação baseada no horário comercial normal
+                    </span>
+                  )}
                 </div>
               </div>
             </div>

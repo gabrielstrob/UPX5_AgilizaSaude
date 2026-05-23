@@ -169,6 +169,7 @@ def importar_place_google(place_id: str, db: Session = Depends(database.get_db),
         review_autor=review_autor,
         review_nota=review_nota,
         review_data=review_data,
+        google_place_id=place_id,
     )
 
     return crud.criar_clinica(db, clinica_in)
