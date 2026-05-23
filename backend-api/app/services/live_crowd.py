@@ -1,108 +1,109 @@
 import os
 import logging
-import livepopulartimes
-import random
-import datetime
+import serpapi
 from dotenv import load_dotenv
 
 load_dotenv()
 
 logger = logging.getLogger(__name__)
 
-GOOGLE_PLACES_API_KEY = os.getenv("GOOGLE_PLACES_API_KEY")
+SERPAPI_KEY = os.getenv("SERPAPI_KEY")
+
+def map_live_info_to_occupancy(info_str: str):
+    """
+    Mapeia a string descritiva em inglês ou português de live_hash > info para
+    o nível (1-5) para fins de estilização e ícones no frontend.
+    """
+    if not info_str:
+        return None
+        
+    info_lower = info_str.lower()
+    
+    # 1. Um pouco movimentado / Não muito movimentado (Nível 2)
+    if any(x in info_lower for x in ["a little busy", "um pouco movimentado", "um pouco"]):
+        return 2, "Um pouco movimentado"
+    if any(x in info_lower for x in ["not too busy", "não muito movimentado", "não muito"]):
+        return 2, "Não muito movimentado"
+        
+    # 2. Muito movimentado / Lotado (Nível 5)
+    if any(x in info_lower for x in ["as busy as it gets", "very busy", "lotado", "muito movimentado"]):
+        return 5, "Muito movimentado"
+        
+    # 3. Pouco movimentado / Menos movimentado que o usual (Nível 1)
+    if any(x in info_lower for x in ["less busy than usual", "not busy", "pouco movimentado", "baixo", "menos movimentado"]):
+        return 1, "Pouco movimentado"
+        
+    # 4. Mais movimentado do que o normal (Nível 4)
+    if any(x in info_lower for x in ["busier than usual", "more busy than usual", "mais movimentado"]):
+        return 4, "Mais movimentado do que o normal"
+        
+    # 5. Tão movimentado quanto o normal (Nível 3)
+    if any(x in info_lower for x in ["as busy as usual", "tão movimentado quanto o normal", "tão movimentado", "normal"]):
+        return 3, "Tão movimentado quanto o normal"
+        
+    # Fallback genérico para "busy" caso não bata em nenhuma das anteriores
+    if "busy" in info_lower:
+        return 3, "Tão movimentado quanto o normal"
+        
+    return None
 
 def fetch_live_occupancy(place_id: str):
     """
-    Busca a lotação em tempo real de uma clínica usando seu google_place_id.
+    Busca a lotação em tempo real de uma clínica usando seu google_place_id via SerpApi.
     Retorna um dicionário com:
-      - 'status' (str): Descrição legível
-      - 'nivel' (int): Nível de 1 a 5
-      - 'raw' (dict): Dados brutos retornados pelo scraper
-    
-    NOTA DE ROBUSTÊZ: Como a biblioteca LivePopularTimes é baseada em scraping
-    não oficial do Google Search/Maps, ela quebra frequentemente quando o Google
-    muda seu layout. Caso o scraper falhe ou não encontre os dados, geramos
-    um dado simulado de alta fidelidade baseado no horário comercial com ruído,
-    garantindo que o fluxo de banco de dados (cache), Thread de background e a
-    UI de Tempo Real do PWA possam ser demonstrados e validados com sucesso.
+      - 'status' (str): Texto retornado diretamente pela SerpApi, ou 'Dados de ocupação não disponíveis.'
+      - 'nivel' (int): Nível de lotação de 1 a 5 (ou 0 se indisponível).
+      - 'raw' (dict): Dados brutos retornados pela API.
     """
-    if not GOOGLE_PLACES_API_KEY:
-        logger.error("[Live Crowd] GOOGLE_PLACES_API_KEY não configurada no .env")
-        return None
+    if not SERPAPI_KEY:
+        logger.error("[Live Crowd] SERPAPI_KEY não configurada no .env")
+        return {
+            "status": "Dados de ocupação não disponíveis.",
+            "nivel": 0,
+            "raw": {"error": "SERPAPI_KEY não configurada"}
+        }
 
     try:
-        logger.info(f"[Live Crowd] Buscando lotação ao vivo para o place_id: {place_id}")
-        data = livepopulartimes.get_populartimes_by_PlaceID(GOOGLE_PLACES_API_KEY, place_id)
-
-        if data and data.get("current_popularity") is not None:
-            current_popularity = int(data.get("current_popularity"))
-            logger.info(f"[Live Crowd] Dados reais obtidos de LivePopularTimes para {place_id}: {current_popularity}%")
-            is_mocked = False
+        logger.info(f"[Live Crowd] Buscando lotação ao vivo para o place_id via SerpApi: {place_id}")
+        client = serpapi.Client(api_key=SERPAPI_KEY)
+        
+        # Realiza a busca no motor google_maps com type=place e idioma em português
+        results = client.search({
+            "engine": "google_maps",
+            "type": "place",
+            "place_id": place_id,
+            "hl": "pt-br"
+        })
+        
+        place_results = results.get("place_results", {})
+        popular_times = place_results.get("popular_times", {})
+        
+        live_hash = popular_times.get("live_hash", {}) if popular_times else {}
+        info_str = live_hash.get("info")
+        
+        if info_str:
+            mapped = map_live_info_to_occupancy(info_str)
+            nivel = mapped[0] if mapped else 3
+            status = info_str  # Utiliza o retorno direto da SerpApi
+            
+            logger.info(f"[Live Crowd] Lotação obtida com sucesso: status='{status}', nivel={nivel}")
+            return {
+                "status": status,
+                "nivel": nivel,
+                "raw": popular_times
+            }
         else:
-            logger.warning(f"[Live Crowd] Popularidade em tempo real indisponível para {place_id}. Usando gerador de alta fidelidade para fins de demonstração.")
-            current_popularity = gerar_popularidade_simulada()
-            is_mocked = True
-            data = {"current_popularity": current_popularity, "note": "Demonstração (Scraper inativo ou sem tráfego suficiente)"}
-
-        # Mapeamento do percentual de lotação (0-100) para a escala 1-5 do frontend:
-        if current_popularity <= 15:
-            nivel = 1
-            status = "Pouco movimentado"
-        elif current_popularity <= 45:
-            nivel = 2
-            status = "Não muito movimentado"
-        elif current_popularity <= 70:
-            nivel = 3
-            status = "Tão movimentado quanto o normal"
-        elif current_popularity <= 90:
-            nivel = 4
-            status = "Mais movimentado do que o normal"
-        else:
-            nivel = 5
-            status = "Muito movimentado"
-
-        # Se for mockado para demonstração de tempo real, adicionamos uma nota discreta
-        status_exibicao = f"{status}"
-
-        logger.info(f"[Live Crowd] Lotação final para {place_id}: status='{status_exibicao}', nivel={nivel} ({current_popularity}%)")
-
-        return {
-            "status": status_exibicao,
-            "nivel": nivel,
-            "raw": data
-        }
+            logger.warning(f"[Live Crowd] live_hash.info ausente para {place_id}.")
+            return {
+                "status": "Dados de ocupação não disponíveis.",
+                "nivel": 0,
+                "raw": popular_times or {}
+            }
+            
     except Exception as e:
-        logger.error(f"[Live Crowd] Erro no scraper para o place_id {place_id}: {e}. Ativando gerador de alta fidelidade para demonstração.", exc_info=True)
-        
-        # Gerador de demonstração em caso de exceção de rede/layout da biblioteca
-        current_popularity = gerar_popularidade_simulada()
-        status_map = {
-            1: "Pouco movimentado",
-            2: "Não muito movimentado",
-            3: "Tão movimentado quanto o normal",
-            4: "Mais movimentado do que o normal",
-            5: "Muito movimentado"
-        }
-        nivel = 1 if current_popularity <= 15 else (2 if current_popularity <= 45 else (3 if current_popularity <= 70 else (4 if current_popularity <= 90 else 5)))
-        status = status_map[nivel]
-        
+        logger.error(f"[Live Crowd] Erro ao chamar SerpApi para o place_id {place_id}: {e}", exc_info=True)
         return {
-            "status": status,
-            "nivel": nivel,
-            "raw": {"current_popularity": current_popularity, "error": str(e), "note": "Demonstração (Scraper falhou/exceção)"}
+            "status": "Dados de ocupação não disponíveis.",
+            "nivel": 0,
+            "raw": {"error": str(e)}
         }
-
-def gerar_popularidade_simulada():
-    """Gera um percentual de popularidade realista com base no horário do dia"""
-    hora_atual = datetime.datetime.now().hour
-    if 0 <= hora_atual <= 6:
-        base = 10
-    elif 7 <= hora_atual <= 11:
-        base = 75
-    elif 12 <= hora_atual <= 14:
-        base = 95
-    elif 15 <= hora_atual <= 18:
-        base = 60
-    else:
-        base = 30
-    return max(0, min(100, base + random.randint(-15, 15)))
