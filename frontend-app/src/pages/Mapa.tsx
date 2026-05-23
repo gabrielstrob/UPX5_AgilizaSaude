@@ -196,92 +196,92 @@ export default function Mapa() {
         ))}
       </MapContainer>
 
-      {/* CEP Input */}
-      <div className="absolute top-container-padding left-container-padding right-container-padding z-[401] max-w-[360px] max-sm:max-w-none bg-surface/95 backdrop-blur-md border border-outline-variant/30 rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.08)] p-3">
-        <div className="flex items-center gap-2">
-          <input
-            value={cep}
-            onChange={(event) => setCep(normalizeCep(event.target.value))}
-            onKeyDown={(event) => event.key === 'Enter' && handleCepSubmit()}
-            placeholder="Digite seu CEP"
-            inputMode="numeric"
-            className="flex-1 bg-surface-container-low text-on-surface px-3 py-2 rounded-lg border border-outline-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/40"
-          />
-          <button
-            onClick={handleCepSubmit}
-            disabled={cepLoading}
-            className="px-3 py-2 rounded-lg bg-primary text-on-primary font-button text-button disabled:opacity-60"
-          >
-            {cepLoading ? '...' : 'Usar CEP'}
-          </button>
+      {/* Overlay UI Layer */}
+      <div className="absolute inset-0 z-[400] flex flex-col pointer-events-none">
+        {/* Top: CEP + GPS */}
+        <div className="p-container-padding">
+          <div className="pointer-events-auto flex flex-wrap items-center gap-2 w-full sm:w-auto sm:max-w-[420px] bg-surface/95 backdrop-blur-md border border-outline-variant/30 rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.08)] p-2">
+            <input
+              value={cep}
+              onChange={(event) => setCep(normalizeCep(event.target.value))}
+              onKeyDown={(event) => event.key === 'Enter' && handleCepSubmit()}
+              placeholder="Digite seu CEP"
+              inputMode="numeric"
+              className="flex-1 min-w-0 bg-surface-container-low text-on-surface px-3 py-2 rounded-lg border border-outline-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/40"
+            />
+            <button
+              onClick={handleCepSubmit}
+              disabled={cepLoading}
+              className="shrink-0 px-3 py-2 rounded-lg bg-primary text-on-primary font-button text-button disabled:opacity-60"
+            >
+              {cepLoading ? '...' : 'Usar CEP'}
+            </button>
+            <div className="w-px h-8 bg-outline-variant/30 shrink-0" />
+            <button 
+              onClick={resetToGps}
+              className="shrink-0 w-10 h-10 bg-surface text-on-surface rounded-full shadow-[0_2px_8px_rgba(0,0,0,0.06)] flex items-center justify-center hover:bg-surface-container-low transition-colors border border-outline-variant/30"
+            >
+              <span className="material-symbols-outlined text-[20px]">my_location</span>
+            </button>
+            {cepError && <p className="text-error text-xs mt-1.5 w-full">{cepError}</p>}
+            {cepApplied && !cepError && (
+              <p className="text-outline text-xs mt-1.5 w-full">Localizacao definida pelo CEP {cepApplied}.</p>
+            )}
+          </div>
         </div>
-        {cepError && <p className="text-error text-xs mt-2">{cepError}</p>}
-        {cepApplied && !cepError && (
-          <p className="text-outline text-xs mt-2">Localizacao definida pelo CEP {cepApplied}.</p>
-        )}
-      </div>
 
-      {/* Floating Controls (Top Right) */}
-      <div className={`absolute top-container-padding right-container-padding ${cepApplied ? 'max-sm:top-[120px]' : 'max-sm:top-[96px]'} z-[400] flex flex-col gap-unit`}>
-        <button 
-          onClick={resetToGps}
-          className="w-12 h-12 bg-surface text-on-surface rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.06)] flex items-center justify-center hover:bg-surface-container-low transition-colors border border-outline-variant/30"
-        >
-          <span className="material-symbols-outlined">my_location</span>
-        </button>
-        <button className="w-12 h-12 bg-surface text-on-surface rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.06)] flex items-center justify-center hover:bg-surface-container-low transition-colors border border-outline-variant/30">
-          <span className="material-symbols-outlined">filter_list</span>
-        </button>
-      </div>
+        {/* Spacer - pushes card to bottom */}
+        <div className="flex-1 min-h-0" />
 
-      {/* Closest Unit Card */}
-      {activeClinica && (
-        <div className="absolute bottom-[88px] md:bottom-container-padding left-0 w-full px-container-padding z-[400]">
-          <div className="bg-surface rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.08)] border border-outline-variant/20 overflow-hidden backdrop-blur-md bg-white/95">
-            <div className="p-4">
-              <div className="flex justify-between items-start mb-stack-sm">
-                <div>
-                  <h2 className="font-h2 text-h2 text-on-surface mb-1">{activeClinica.nome}</h2>
-                  <p className="text-outline text-sm flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[16px]">location_on</span>
-                    {activeClinica.distancia_km} km de distância
-                  </p>
+        {/* Bottom: Closest Unit Card */}
+        {activeClinica && (
+          <div className="pointer-events-auto px-container-padding pb-[calc(var(--bottom-nav-height)+8px)] md:pb-container-padding">
+            <div className="bg-surface rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.08)] border border-outline-variant/20 backdrop-blur-md bg-white/95 max-h-[40svh] overflow-y-auto">
+              <div className="p-4">
+                <div className="flex justify-between items-start mb-stack-sm">
+                  <div className="min-w-0">
+                    <h2 className="font-h2 text-h2 text-on-surface mb-1">{activeClinica.nome}</h2>
+                    <p className="text-outline text-sm flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[16px]">location_on</span>
+                      {activeClinica.distancia_km} km de distância
+                    </p>
+                  </div>
+                  <div className={`shrink-0 px-2.5 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 ${activeClinica.aberto_24h ? 'bg-surface-container-high text-primary' : 'bg-surface-container text-outline'}`}>
+                    <span className={`w-2 h-2 rounded-full block ${activeClinica.aberto_24h ? 'bg-primary' : 'bg-outline'}`}></span>
+                    {activeClinica.aberto_24h ? '24 Horas' : 'Aberto'}
+                  </div>
                 </div>
-                <div className={`shrink-0 px-2.5 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 ${activeClinica.aberto_24h ? 'bg-surface-container-high text-primary' : 'bg-surface-container text-outline'}`}>
-                  <span className={`w-2 h-2 rounded-full block ${activeClinica.aberto_24h ? 'bg-primary' : 'bg-outline'}`}></span>
-                  {activeClinica.aberto_24h ? '24 Horas' : 'Aberto'}
+                <div className="flex items-center gap-4 py-stack-sm border-t border-outline-variant/20 border-b mb-stack-md">
+                  <div className="flex-1">
+                    <p className="font-label-caps text-label-caps text-outline mb-1">TEMPO ESTIMADO</p>
+                    <p className="font-bold text-on-surface flex items-center gap-2">
+                      <span className="material-symbols-outlined text-tertiary-fixed-dim">schedule</span>
+                      {activeClinica.tempo_espera_minutos} min de espera
+                    </p>
+                  </div>
+                  <div className="h-10 w-px bg-outline-variant/30"></div>
+                  <div className="flex-1 text-right">
+                    <p className="font-label-caps text-label-caps text-outline mb-1">AVALIAÇÃO</p>
+                    <p className="font-bold text-primary flex items-center justify-end gap-1">
+                      <span className="material-symbols-outlined text-[16px]">star</span>
+                      {activeClinica.avaliacao_media}
+                    </p>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-4 py-stack-sm border-t border-outline-variant/20 border-b mb-stack-md">
-                <div className="flex-1">
-                  <p className="font-label-caps text-label-caps text-outline mb-1">TEMPO ESTIMADO</p>
-                  <p className="font-bold text-on-surface flex items-center gap-2">
-                    <span className="material-symbols-outlined text-tertiary-fixed-dim">schedule</span>
-                    {activeClinica.tempo_espera_minutos} min de espera
-                  </p>
+                <div className="flex gap-stack-sm">
+                  <Link to={`/clinicas/${activeClinica.id}`} className="flex-1 bg-primary text-on-primary font-button text-button py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-on-primary-fixed-variant transition-colors shadow-sm">
+                    <span className="material-symbols-outlined">directions_car</span>
+                    Ver Detalhes
+                  </Link>
+                  <button className="w-14 bg-surface-container text-on-surface border border-outline-variant/50 rounded-lg flex items-center justify-center hover:bg-surface-container-high transition-colors">
+                    <span className="material-symbols-outlined">call</span>
+                  </button>
                 </div>
-                <div className="h-10 w-px bg-outline-variant/30"></div>
-                <div className="flex-1 text-right">
-                  <p className="font-label-caps text-label-caps text-outline mb-1">AVALIAÇÃO</p>
-                  <p className="font-bold text-primary flex items-center justify-end gap-1">
-                    <span className="material-symbols-outlined text-[16px]">star</span>
-                    {activeClinica.avaliacao_media}
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-stack-sm">
-                <Link to={`/clinicas/${activeClinica.id}`} className="flex-1 bg-primary text-on-primary font-button text-button py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-on-primary-fixed-variant transition-colors shadow-sm">
-                  <span className="material-symbols-outlined">directions_car</span>
-                  Ver Detalhes
-                </Link>
-                <button className="w-14 bg-surface-container text-on-surface border border-outline-variant/50 rounded-lg flex items-center justify-center hover:bg-surface-container-high transition-colors">
-                  <span className="material-symbols-outlined">call</span>
-                </button>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
