@@ -12,8 +12,8 @@ except Exception as e:
     print(f"Aviso ao criar tabelas: {e}")
 
 app = FastAPI(
-    title="Conecta Odonto API",
-    description="API para o PWA Conecta Odonto com busca geoespacial",
+    title="OdontoJá API",
+    description="API para o PWA OdontoJá com busca geoespacial",
     version="1.0.0"
 )
 
@@ -32,4 +32,4 @@ app.include_router(auth.router)
 
 @app.get("/")
 def read_root():
-    return {"message": "Conecta Odonto API está online!"}
+    return {"message": "OdontoJá API está online!"}

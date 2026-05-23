@@ -1,4 +1,4 @@
-# Conecta Odonto
+# OdontoJá
 
 PWA para localização de clínicas odontológicas públicas com busca geoespacial, triagem e painel administrativo.
 

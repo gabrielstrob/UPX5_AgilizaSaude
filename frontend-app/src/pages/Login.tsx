@@ -29,7 +29,7 @@ export default function Login() {
       <div className="w-full max-w-sm">
         <div className="flex items-center justify-center gap-2 mb-8">
           <span className="material-symbols-outlined text-primary text-[40px]">dentistry</span>
-          <h1 className="font-h1 text-h1 text-on-surface">Conecta Odonto</h1>
+          <h1 className="font-h1 text-h1 text-on-surface">OdontoJá</h1>
         </div>
 
         <div className="bg-surface rounded-2xl p-6 shadow-sm border border-outline-variant/20">
@@ -52,7 +52,7 @@ export default function Login() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@conectaodonto.com"
+                placeholder="admin@todontoja.com"
                 required
                 className="w-full bg-surface-container rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-primary text-on-surface placeholder:text-outline"
               />

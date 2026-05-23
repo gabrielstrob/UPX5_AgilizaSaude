@@ -6,6 +6,15 @@
   .pt-safe { padding-top: env(safe-area-inset-top, 0px); }
 }
 
+.leaflet-control-attribution {
+  bottom: 72px !important;
+}
+@media (min-width: 768px) {
+  .leaflet-control-attribution {
+    bottom: 0 !important;
+  }
+}
+
 html, body {
   min-height: max(884px, 100dvh);
 }

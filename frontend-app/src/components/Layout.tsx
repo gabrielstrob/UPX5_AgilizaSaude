@@ -9,7 +9,7 @@ export default function Layout() {
       <header className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 h-16 bg-white dark:bg-slate-950 shadow-sm dark:shadow-none border-b border-slate-100 dark:border-slate-900">
         <div className="text-cyan-700 dark:text-cyan-400 font-extrabold flex items-center gap-2">
           <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>health_and_safety</span>
-          <span className="font-manrope font-bold text-lg tracking-tight">Conecta Odonto</span>
+          <span className="font-manrope font-bold text-lg tracking-tight">OdontoJá</span>
         </div>
 
       </header>
