@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
 from typing import Optional, Dict, Any
 from uuid import UUID
+from datetime import datetime
 
 class ClinicaBase(BaseModel):
     nome: str
@@ -15,6 +16,7 @@ class ClinicaBase(BaseModel):
     review_autor: Optional[str] = None
     review_nota: Optional[float] = None
     review_data: Optional[str] = None
+    google_place_id: Optional[str] = None
 
 class ClinicaUpdate(BaseModel):
     horarios: Optional[Dict[str, Any]] = None
@@ -29,7 +31,9 @@ class ClinicaResponse(ClinicaBase):
     latitude: float
     longitude: float
     distancia_km: Optional[float] = None  # Calculado dinamicamente via PostGIS na query
-    tempo_espera_minutos: Optional[int] = 15 # Mock dinâmico para a UI
+    lotacao_status: Optional[str] = None
+    lotacao_nivel: Optional[int] = None
+    lotacao_atualizada_em: Optional[datetime] = None
 
     class Config:
         from_attributes = True

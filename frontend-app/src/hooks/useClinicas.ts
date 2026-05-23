@@ -3,7 +3,7 @@ import { api } from '../services/api';
 import { useLocation } from '../contexts/LocationContext';
 
 export interface Clinica {
-  id: number;
+  id: string;
   nome: string;
   endereco: string;
   telefone: string;
@@ -19,7 +19,10 @@ export interface Clinica {
   latitude: number;
   longitude: number;
   distancia_km: number;
-  tempo_espera_minutos: number;
+  lotacao_status: string;
+  lotacao_nivel: number;
+  google_place_id?: string | null;
+  lotacao_atualizada_em?: string | null;
 }
 
 export function useClinicas(raio_km: number = 10) {

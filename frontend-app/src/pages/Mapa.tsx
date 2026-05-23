@@ -5,6 +5,7 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { useClinicas, type Clinica } from '../hooks/useClinicas';
 import { useLocation } from '../contexts/LocationContext';
+import { getLotacaoStyle } from '../utils/lotacao';
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -253,10 +254,10 @@ export default function Mapa() {
                 </div>
                 <div className="flex items-center gap-4 py-stack-sm border-t border-outline-variant/20 border-b mb-stack-md">
                   <div className="flex-1">
-                    <p className="font-label-caps text-label-caps text-outline mb-1">TEMPO ESTIMADO</p>
-                    <p className="font-bold text-on-surface flex items-center gap-2">
-                      <span className="material-symbols-outlined text-tertiary-fixed-dim">schedule</span>
-                      {activeClinica.tempo_espera_minutos} min de espera
+                    <p className="font-label-caps text-label-caps text-outline mb-1">LOTAÇÃO (GOOGLE)</p>
+                    <p className={`font-bold flex items-center gap-1.5 text-[14px] ${getLotacaoStyle(activeClinica.lotacao_nivel).text}`}>
+                      <span className="material-symbols-outlined text-[18px]">{getLotacaoStyle(activeClinica.lotacao_nivel).icon}</span>
+                      {activeClinica.lotacao_status}
                     </p>
                   </div>
                   <div className="h-10 w-px bg-outline-variant/30"></div>

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Boolean, JSON, Float
+from sqlalchemy import Column, String, Boolean, JSON, Float, Integer, DateTime
 from sqlalchemy.dialects.postgresql import UUID
 from geoalchemy2 import Geometry
 import uuid
@@ -28,6 +28,13 @@ class Clinica(Base):
     review_autor = Column(String, nullable=True)
     review_nota = Column(Float, nullable=True)
     review_data = Column(String, nullable=True)
+
+    # Campos de lotação em tempo real e identificação do Google Maps
+    google_place_id = Column(String, index=True, nullable=True)
+    lotacao_status = Column(String, nullable=True)
+    lotacao_nivel = Column(Integer, nullable=True)
+    lotacao_atualizada_em = Column(DateTime, nullable=True)
+    populartimes_raw = Column(JSON, nullable=True)
 
     # Coluna PostGIS para localização exata
     # SRID 4326 é o padrão para GPS (Latitude e Longitude)
