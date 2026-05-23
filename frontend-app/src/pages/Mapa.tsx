@@ -13,11 +13,55 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
+const userLocationIcon = L.divIcon({
+  className: 'user-location-marker',
+  html: '<div class="user-location-dot"></div><div class="user-location-pulse"></div>',
+  iconSize: [24, 24],
+  iconAnchor: [12, 12],
+});
+
 function MapUpdater({ center }: { center: [number, number] }) {
   const map = useMap();
   map.setView(center, map.getZoom());
   return null;
 }
+
+const style = document.createElement('style');
+style.textContent = `
+  .user-location-marker {
+    background: none !important;
+    border: none !important;
+  }
+  .user-location-dot {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 14px;
+    height: 14px;
+    background: #006781;
+    border: 3px solid #ffffff;
+    border-radius: 50%;
+    z-index: 2;
+  }
+  .user-location-pulse {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 24px;
+    height: 24px;
+    background: rgba(0, 103, 129, 0.25);
+    border-radius: 50%;
+    animation: user-pulse-ring 2s ease-out infinite;
+    z-index: 1;
+  }
+  @keyframes user-pulse-ring {
+    0% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
+    100% { transform: translate(-50%, -50%) scale(2.5); opacity: 0; }
+  }
+`;
+document.head.appendChild(style);
 
 export default function Mapa() {
   const { clinicas, loading, error, userLocation, refetch } = useClinicas(50000);
@@ -135,7 +179,7 @@ export default function Mapa() {
         />
         <MapUpdater center={userLocation} />
         
-        <Marker position={userLocation}>
+        <Marker position={userLocation} icon={userLocationIcon}>
           <Popup>Você está aqui</Popup>
         </Marker>
 
