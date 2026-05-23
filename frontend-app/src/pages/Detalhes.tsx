@@ -152,15 +152,23 @@ export default function Detalhes() {
                 <span className="font-label-caps text-label-caps text-on-surface-variant">{clinica.total_avaliacoes} AVALIAÇÕES</span>
               </div>
               <div className="space-y-stack-sm">
+                {clinica.review_texto && (
                 <div className="bg-surface rounded-lg p-3 border border-surface-container-low">
                   <div className="flex items-center gap-2 mb-2">
-                    <div className="w-8 h-8 rounded-full bg-primary-fixed flex items-center justify-center text-primary font-bold">M</div>
-                    <div>
-                      <p className="font-body-md text-body-md text-on-surface text-sm font-semibold">Maria Silva</p>
+                    <div className="w-8 h-8 rounded-full bg-primary-fixed flex items-center justify-center text-primary font-bold">
+                      {clinica.review_autor?.charAt(0).toUpperCase() || "?"}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-body-md text-body-md text-on-surface text-sm font-semibold truncate">{clinica.review_autor}</p>
+                      <div className="flex items-center gap-1">
+                        <span className="material-symbols-outlined text-xs text-tertiary-fixed-dim" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                        <span className="font-body-md text-body-md text-on-surface-variant text-xs">{clinica.review_nota} · {clinica.review_data}</span>
+                      </div>
                     </div>
                   </div>
-                  <p className="font-body-md text-body-md text-on-surface-variant text-sm line-clamp-3">"Atendimento muito rápido na madrugada. O dentista foi super atencioso e resolveu minha dor de dente na hora."</p>
+                  <p className="font-body-md text-body-md text-on-surface-variant text-sm line-clamp-3">"{clinica.review_texto}"</p>
                 </div>
+                )}
               </div>
             </div>
           </div>

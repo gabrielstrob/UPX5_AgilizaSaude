@@ -24,6 +24,11 @@ class Clinica(Base):
     avaliacao_media = Column(Float, default=0.0)
     total_avaliacoes = Column(Float, default=0)
 
+    review_texto = Column(String, nullable=True)
+    review_autor = Column(String, nullable=True)
+    review_nota = Column(Float, nullable=True)
+    review_data = Column(String, nullable=True)
+
     # Coluna PostGIS para localização exata
     # SRID 4326 é o padrão para GPS (Latitude e Longitude)
     localizacao = Column(Geometry(geometry_type='POINT', srid=4326), nullable=False)

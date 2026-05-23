@@ -123,6 +123,18 @@ def importar_place_google(place_id: str, db: Session = Depends(database.get_db),
     avaliacao_media = detalhes.get("rating", 0.0)
     total_avaliacoes = detalhes.get("user_ratings_total", 0)
 
+    review_texto = None
+    review_autor = None
+    review_nota = None
+    review_data = None
+    reviews = detalhes.get("reviews", [])
+    if reviews:
+        mais_recente = max(reviews, key=lambda r: r.get("time", 0))
+        review_texto = mais_recente.get("text")
+        review_autor = mais_recente.get("author_name")
+        review_nota = mais_recente.get("rating")
+        review_data = mais_recente.get("relative_time_description")
+
     foto_url = None
     if "photos" in detalhes and len(detalhes["photos"]) > 0:
         photo_ref = detalhes["photos"][0].get("photo_reference")
@@ -152,7 +164,11 @@ def importar_place_google(place_id: str, db: Session = Depends(database.get_db),
         avaliacao_media=avaliacao_media,
         total_avaliacoes=total_avaliacoes,
         latitude=lat,
-        longitude=lng
+        longitude=lng,
+        review_texto=review_texto,
+        review_autor=review_autor,
+        review_nota=review_nota,
+        review_data=review_data,
     )
 
     return crud.criar_clinica(db, clinica_in)

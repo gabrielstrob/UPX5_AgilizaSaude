@@ -52,7 +52,7 @@ def get_place_details(place_id: str):
         "place_id": place_id,
         "key": GOOGLE_PLACES_API_KEY,
         "language": "pt-BR",
-        "fields": "name,formatted_address,geometry,formatted_phone_number,opening_hours,rating,user_ratings_total,photos"
+        "fields": "name,formatted_address,geometry,formatted_phone_number,opening_hours,rating,user_ratings_total,photos,reviews"
     }
     response = requests.get(url, params=params)
     response.raise_for_status()

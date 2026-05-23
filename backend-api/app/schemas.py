@@ -11,6 +11,10 @@ class ClinicaBase(BaseModel):
     foto_url: Optional[str] = None
     avaliacao_media: float = 0.0
     total_avaliacoes: int = 0
+    review_texto: Optional[str] = None
+    review_autor: Optional[str] = None
+    review_nota: Optional[float] = None
+    review_data: Optional[str] = None
 
 class ClinicaUpdate(BaseModel):
     horarios: Optional[Dict[str, Any]] = None

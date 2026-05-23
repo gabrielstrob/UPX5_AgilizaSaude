@@ -12,6 +12,10 @@ export interface Clinica {
   foto_url: string | null;
   avaliacao_media: number;
   total_avaliacoes: number;
+  review_texto: string | null;
+  review_autor: string | null;
+  review_nota: number | null;
+  review_data: string | null;
   latitude: number;
   longitude: number;
   distancia_km: number;

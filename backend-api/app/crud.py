@@ -33,6 +33,7 @@ def get_clinicas_proximas(db: Session, lat: float, lng: float, raio_km: float = 
     query = text("""
         SELECT 
             id, nome, endereco, telefone, aberto_24h, horarios, foto_url, avaliacao_media, total_avaliacoes,
+            review_texto, review_autor, review_nota, review_data,
             ST_Y(localizacao::geometry) as latitude,
             ST_X(localizacao::geometry) as longitude,
             ST_Distance(localizacao::geography, ST_GeographyFromText(:ponto)) / 1000.0 as distancia_km
@@ -57,6 +58,10 @@ def get_clinicas_proximas(db: Session, lat: float, lng: float, raio_km: float = 
             "foto_url": row.foto_url,
             "avaliacao_media": row.avaliacao_media,
             "total_avaliacoes": row.total_avaliacoes,
+            "review_texto": row.review_texto,
+            "review_autor": row.review_autor,
+            "review_nota": row.review_nota,
+            "review_data": row.review_data,
             "latitude": row.latitude,
             "longitude": row.longitude,
             "distancia_km": round(row.distancia_km, 2),
@@ -80,6 +85,10 @@ def criar_clinica(db: Session, clinica: schemas.ClinicaCreate):
         foto_url=clinica.foto_url,
         avaliacao_media=clinica.avaliacao_media,
         total_avaliacoes=clinica.total_avaliacoes,
+        review_texto=clinica.review_texto,
+        review_autor=clinica.review_autor,
+        review_nota=clinica.review_nota,
+        review_data=clinica.review_data,
         localizacao=wkt_element
     )
     
@@ -97,6 +106,7 @@ def get_clinica_por_id(db: Session, clinica_id: UUID):
     query = text("""
         SELECT 
             id, nome, endereco, telefone, aberto_24h, horarios, foto_url, avaliacao_media, total_avaliacoes,
+            review_texto, review_autor, review_nota, review_data,
             ST_Y(localizacao::geometry) as latitude,
             ST_X(localizacao::geometry) as longitude,
             0.0 as distancia_km
@@ -116,6 +126,10 @@ def get_clinica_por_id(db: Session, clinica_id: UUID):
         "foto_url": row.foto_url,
         "avaliacao_media": row.avaliacao_media,
         "total_avaliacoes": row.total_avaliacoes,
+        "review_texto": row.review_texto,
+        "review_autor": row.review_autor,
+        "review_nota": row.review_nota,
+        "review_data": row.review_data,
         "latitude": row.latitude,
         "longitude": row.longitude,
         "distancia_km": 0.0,
@@ -127,6 +141,7 @@ def get_todas_clinicas(db: Session):
     query = text("""
         SELECT 
             id, nome, endereco, telefone, aberto_24h, horarios, foto_url, avaliacao_media, total_avaliacoes,
+            review_texto, review_autor, review_nota, review_data,
             ST_Y(localizacao::geometry) as latitude,
             ST_X(localizacao::geometry) as longitude,
             0.0 as distancia_km
@@ -147,6 +162,10 @@ def get_todas_clinicas(db: Session):
             "foto_url": row.foto_url,
             "avaliacao_media": row.avaliacao_media,
             "total_avaliacoes": row.total_avaliacoes,
+            "review_texto": row.review_texto,
+            "review_autor": row.review_autor,
+            "review_nota": row.review_nota,
+            "review_data": row.review_data,
             "latitude": row.latitude,
             "longitude": row.longitude,
             "distancia_km": 0.0,
