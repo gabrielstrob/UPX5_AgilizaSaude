@@ -9,6 +9,7 @@ export default function Detalhes() {
   const [clinica, setClinica] = useState<Clinica | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [reviewExpanded, setReviewExpanded] = useState(false);
 
   useEffect(() => {
     const fetchClinica = async () => {
@@ -166,7 +167,16 @@ export default function Detalhes() {
                       </div>
                     </div>
                   </div>
-                  <p className="font-body-md text-body-md text-on-surface-variant text-sm line-clamp-3">"{clinica.review_texto}"</p>
+                  <p className={`font-body-md text-body-md text-on-surface-variant text-sm ${reviewExpanded ? '' : 'line-clamp-3'}`}>"{clinica.review_texto}"</p>
+                  {clinica.review_texto && clinica.review_texto.length > 120 && (
+                    <button
+                      onClick={() => setReviewExpanded(v => !v)}
+                      className="mt-1 text-primary text-xs font-semibold flex items-center gap-0.5 hover:underline"
+                    >
+                      {reviewExpanded ? 'Ver menos' : 'Ver mais'}
+                      <span className="material-symbols-outlined text-[16px]">{reviewExpanded ? 'expand_less' : 'expand_more'}</span>
+                    </button>
+                  )}
                 </div>
                 )}
               </div>
