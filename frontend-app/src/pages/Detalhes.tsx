@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '../services/api';
 import { type Clinica } from '../hooks/useClinicas';
+import { getLotacaoStyle } from '../utils/lotacao';
 
 export default function Detalhes() {
   const navigate = useNavigate();
@@ -104,23 +105,23 @@ export default function Detalhes() {
           <div className="lg:col-span-2 space-y-stack-md">
             <div className="bg-surface-container-lowest rounded-xl p-container-padding shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-surface-container/50">
               <h2 className="font-h2 text-h2 text-on-surface mb-stack-sm flex items-center gap-2">
-                <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>schedule</span>
-                Fluxo de Atendimento
+                <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>bar_chart</span>
+                Movimentação (Google)
               </h2>
-              <p className="font-body-md text-body-md text-on-surface-variant mb-stack-md">Status estimado com base no histórico da unidade.</p>
-              <div className="bg-surface-container-low rounded-lg p-stack-md flex items-center justify-between border-l-4 border-primary">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-primary-container flex items-center justify-center">
-                    <span className="material-symbols-outlined text-primary text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>sentiment_satisfied</span>
-                  </div>
-                  <div>
-                    <span className="block font-body-lg text-body-lg text-on-surface font-semibold">Tranquilo</span>
-                    <span className="block font-body-md text-body-md text-on-surface-variant">Tempo estimado de espera</span>
-                  </div>
+              <p className="font-body-md text-body-md text-on-surface-variant mb-stack-md">Fluxo de visitantes estimado em tempo real.</p>
+              <div className={`bg-surface-container-low rounded-lg p-stack-md flex items-center gap-4 border-l-4 ${getLotacaoStyle(clinica.lotacao_nivel).border}`}>
+                <div className={`w-12 h-12 rounded-full ${getLotacaoStyle(clinica.lotacao_nivel).bg} flex items-center justify-center shrink-0`}>
+                  <span className={`material-symbols-outlined text-2xl ${getLotacaoStyle(clinica.lotacao_nivel).text}`}>
+                    {getLotacaoStyle(clinica.lotacao_nivel).icon}
+                  </span>
                 </div>
-                <div className="text-right">
-                  <span className="block font-h1 text-h1 text-primary">~15</span>
-                  <span className="block font-label-caps text-label-caps text-on-surface-variant">MINUTOS</span>
+                <div>
+                  <span className="block font-body-lg text-body-lg text-on-surface font-semibold">
+                    {clinica.lotacao_status}
+                  </span>
+                  <span className="block font-body-sm text-[13px] text-on-surface-variant leading-tight">
+                    Frequência de clientes atual em comparação com a média normal para este horário.
+                  </span>
                 </div>
               </div>
             </div>

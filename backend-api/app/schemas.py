@@ -29,7 +29,8 @@ class ClinicaResponse(ClinicaBase):
     latitude: float
     longitude: float
     distancia_km: Optional[float] = None  # Calculado dinamicamente via PostGIS na query
-    tempo_espera_minutos: Optional[int] = 15 # Mock dinâmico para a UI
+    lotacao_status: Optional[str] = "Não muito movimentado"
+    lotacao_nivel: Optional[int] = 2
 
     class Config:
         from_attributes = True

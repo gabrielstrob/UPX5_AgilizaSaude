@@ -1,8 +1,9 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useClinicas } from '../hooks/useClinicas';
+import { getLotacaoStyle } from '../utils/lotacao';
 
-type SortMode = 'distance' | 'wait' | 'rating';
+type SortMode = 'distance' | 'occupancy' | 'rating';
 
 export default function Unidades() {
   const { clinicas, loading, error, refetch } = useClinicas(50000);
@@ -30,7 +31,7 @@ export default function Unidades() {
     }
     if (filter24h) list = list.filter(c => c.aberto_24h);
     if (sortBy === 'distance') list.sort((a, b) => a.distancia_km - b.distancia_km);
-    else if (sortBy === 'wait') list.sort((a, b) => a.tempo_espera_minutos - b.tempo_espera_minutos);
+    else if (sortBy === 'occupancy') list.sort((a, b) => a.lotacao_nivel - b.lotacao_nivel);
     else if (sortBy === 'rating') list.sort((a, b) => b.avaliacao_media - a.avaliacao_media);
     return list;
   }, [clinicas, search, filter24h, sortBy]);
@@ -73,7 +74,7 @@ export default function Unidades() {
             <div className="flex flex-col gap-2 mb-4">
               {([
                 ['distance', 'Mais próximas', 'location_on'],
-                ['wait', 'Menor espera', 'schedule'],
+                ['occupancy', 'Menos movimentada', 'bar_chart'],
                 ['rating', 'Melhor avaliação', 'star'],
               ] as const).map(([key, label, icon]) => (
                 <button
@@ -159,11 +160,11 @@ export default function Unidades() {
               </p>
               
               <div className="flex items-center gap-4 py-2 border-t border-outline-variant/20">
-                <div className="flex-1">
-                  <p className="font-bold text-on-surface flex items-center gap-1 text-sm">
-                    <span className="material-symbols-outlined text-tertiary-fixed-dim text-[18px]">schedule</span>
-                    {clinica.tempo_espera_minutos} min
-                  </p>
+                <div className="flex-1 flex items-center">
+                  <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${getLotacaoStyle(clinica.lotacao_nivel).bg} ${getLotacaoStyle(clinica.lotacao_nivel).text}`}>
+                    <span className="material-symbols-outlined text-[15px]">{getLotacaoStyle(clinica.lotacao_nivel).icon}</span>
+                    {clinica.lotacao_status}
+                  </span>
                 </div>
                 <div className="h-6 w-px bg-outline-variant/30"></div>
                 <div className="flex-1 flex justify-end">

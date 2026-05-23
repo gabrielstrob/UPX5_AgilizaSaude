@@ -13,18 +13,21 @@ from uuid import UUID
 
 import_datetime = __import__("datetime")
 
-def calcular_tempo_espera_mock():
+def calcular_lotacao_mock():
+    # Retorna o status e o nível de lotação com base no horário atual.
+    # Níveis: 1 (Pouco movimentado), 2 (Não muito movimentado), 3 (Tão movimentado quanto o normal),
+    # 4 (Mais movimentado do que o normal), 5 (Muito movimentado).
     hora_atual = import_datetime.datetime.now().hour
     if 0 <= hora_atual <= 6:
-        return 5
+        return {"status": "Pouco movimentado", "nivel": 1}
     elif 7 <= hora_atual <= 11:
-        return 30
+        return {"status": "Mais movimentado do que o normal", "nivel": 4}
     elif 12 <= hora_atual <= 14:
-        return 45
+        return {"status": "Muito movimentado", "nivel": 5}
     elif 15 <= hora_atual <= 18:
-        return 25
+        return {"status": "Tão movimentado quanto o normal", "nivel": 3}
     else:
-        return 15
+        return {"status": "Não muito movimentado", "nivel": 2}
 
 def get_clinicas_proximas(db: Session, lat: float, lng: float, raio_km: float = 10.0, limit: int = 10):
     ponto_origem = f"SRID=4326;POINT({lng} {lat})"
@@ -48,6 +51,7 @@ def get_clinicas_proximas(db: Session, lat: float, lng: float, raio_km: float = 
     resultados = []
     for row in clinicas_db:
         # Montar o objeto schema a partir do row (que age como dicionário/tupla)
+        lotacao_info = calcular_lotacao_mock()
         clinica_dict = {
             "id": row.id,
             "nome": row.nome,
@@ -65,7 +69,8 @@ def get_clinicas_proximas(db: Session, lat: float, lng: float, raio_km: float = 
             "latitude": row.latitude,
             "longitude": row.longitude,
             "distancia_km": round(row.distancia_km, 2),
-            "tempo_espera_minutos": calcular_tempo_espera_mock()
+            "lotacao_status": lotacao_info["status"],
+            "lotacao_nivel": lotacao_info["nivel"]
         }
         resultados.append(schemas.ClinicaResponse(**clinica_dict))
     
@@ -116,6 +121,7 @@ def get_clinica_por_id(db: Session, clinica_id: UUID):
     row = db.execute(query, {"id": clinica_id}).fetchone()
     if not row:
         return None
+    lotacao_info = calcular_lotacao_mock()
     clinica_dict = {
         "id": row.id,
         "nome": row.nome,
@@ -133,7 +139,8 @@ def get_clinica_por_id(db: Session, clinica_id: UUID):
         "latitude": row.latitude,
         "longitude": row.longitude,
         "distancia_km": 0.0,
-        "tempo_espera_minutos": calcular_tempo_espera_mock()
+        "lotacao_status": lotacao_info["status"],
+        "lotacao_nivel": lotacao_info["nivel"]
     }
     return schemas.ClinicaResponse(**clinica_dict)
 
@@ -152,6 +159,7 @@ def get_todas_clinicas(db: Session):
     
     clinicas = []
     for row in resultados:
+        lotacao_info = calcular_lotacao_mock()
         clinica_dict = {
             "id": row.id,
             "nome": row.nome,
@@ -169,7 +177,8 @@ def get_todas_clinicas(db: Session):
             "latitude": row.latitude,
             "longitude": row.longitude,
             "distancia_km": 0.0,
-            "tempo_espera_minutos": calcular_tempo_espera_mock()
+            "lotacao_status": lotacao_info["status"],
+            "lotacao_nivel": lotacao_info["nivel"]
         }
         clinicas.append(schemas.ClinicaResponse(**clinica_dict))
     return clinicas
