@@ -40,9 +40,9 @@ jobs:
         run: |
           cd frontend-app
           npm install
-          echo "VITE_SUPABASE_URL=${{ vars.VITE_SUPABASE_URL }}" > .env
-          echo "VITE_SUPABASE_ANON_KEY=${{ secrets.VITE_SUPABASE_ANON_KEY }}" >> .env
-          echo "VITE_API_URL=${{ vars.VITE_API_URL }}" >> .env
+          echo "VITE_SUPABASE_URL=https://ealfsxlwpkaogdvddifq.supabase.co" > .env
+          echo "VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVhbGZzeGx3cGthb2dkdmRkaWZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2NTEzNTIsImV4cCI6MjA5MzIyNzM1Mn0.xz4pxhFFTJ22J4TZ-2Mr7D32hnW02-H3YEY1oAaWUCg" >> .env
+          echo "VITE_API_URL=https://odontoja-api.thankfulbay-b13deea5.eastus.azurecontainerapps.io/api" >> .env
           echo "--- checking .env ---"
           grep -c "VITE_SUPABASE_URL=." .env && echo "URL OK" || echo "URL EMPTY"
           grep -c "VITE_SUPABASE_ANON_KEY=." .env && echo "KEY OK" || echo "KEY EMPTY"
