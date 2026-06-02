@@ -1,3 +1,5 @@
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .database import engine, Base
@@ -42,9 +44,22 @@ app = FastAPI(
 )
 
 # Configuração de CORS (permitir que o React acesse a API)
+origins = [
+    "http://localhost:5173",
+    "http://localhost:8100",
+    "http://localhost",
+    "https://localhost",
+    "capacitor://localhost",
+    "https://azurestaticapps.net",
+]
+
+azure_static_url = os.environ.get("AZURE_STATIC_WEB_APP_URL")
+if azure_static_url:
+    origins.append(azure_static_url)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Trocar para ["http://localhost:5173"] em produção
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

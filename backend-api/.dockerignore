@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+*.pyo
+.env
+.env.*
+venv/
+.venv/
+*.egg-info/
+.git/
+.gitignore
+*.md
+setup.bat
+Makefile
+seed.py
+package-lock.json

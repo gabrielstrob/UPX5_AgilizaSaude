@@ -1,4 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
+import { Capacitor } from '@capacitor/core';
+import { Geolocation, type Position } from '@capacitor/geolocation';
 
 type LocationSource = 'gps' | 'cep';
 
@@ -21,6 +23,54 @@ const isCoordInBrasil = (lat: number, lng: number) =>
 const FALLBACK_LAT = -23.5015;
 const FALLBACK_LNG = -47.4526;
 
+const isNative = Capacitor.isNativePlatform();
+
+async function requestNativePermissions(): Promise<boolean> {
+  try {
+    const status = await Geolocation.checkPermissions();
+    if (status.location === 'granted' || status.coarseLocation === 'granted') return true;
+    const req = await Geolocation.requestPermissions({ permissions: ['coarseLocation', 'location'] });
+    return req.location === 'granted' || req.coarseLocation === 'granted';
+  } catch {
+    return false;
+  }
+}
+
+function positionToCoords(position: Position | GeolocationPosition): [number, number] {
+  const lat = position.coords.latitude;
+  const lng = position.coords.longitude;
+  const accuracy = position.coords.accuracy;
+  if (!isCoordInBrasil(lat, lng) || accuracy > 50000) {
+    return [FALLBACK_LAT, FALLBACK_LNG];
+  }
+  return [lat, lng];
+}
+
+async function getNativeLocation(): Promise<[number, number]> {
+  const granted = await requestNativePermissions();
+  if (!granted) return [FALLBACK_LAT, FALLBACK_LNG];
+  const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 15000 });
+  return positionToCoords(pos);
+}
+
+function getWebLocation(): Promise<[number, number]> {
+  return new Promise((resolve) => {
+    if (!('geolocation' in navigator)) {
+      resolve([FALLBACK_LAT, FALLBACK_LNG]);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve(positionToCoords(pos)),
+      () => resolve([FALLBACK_LAT, FALLBACK_LNG]),
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+    );
+  });
+}
+
+function getCurrentLocation(): Promise<[number, number]> {
+  return isNative ? getNativeLocation() : getWebLocation();
+}
+
 export function LocationProvider({ children }: { children: ReactNode }) {
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [cepApplied, setCepApplied] = useState<string | null>(null);
@@ -28,31 +78,10 @@ export function LocationProvider({ children }: { children: ReactNode }) {
   const [locationReady, setLocationReady] = useState(false);
 
   useEffect(() => {
-    if (!('geolocation' in navigator)) {
-      setUserLocation([FALLBACK_LAT, FALLBACK_LNG]);
+    getCurrentLocation().then((coords) => {
+      setUserLocation(coords);
       setLocationReady(true);
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        let lat = position.coords.latitude;
-        let lng = position.coords.longitude;
-
-        if (!isCoordInBrasil(lat, lng) || position.coords.accuracy > 50000) {
-          lat = FALLBACK_LAT;
-          lng = FALLBACK_LNG;
-        }
-
-        setUserLocation([lat, lng]);
-        setLocationReady(true);
-      },
-      () => {
-        setUserLocation([FALLBACK_LAT, FALLBACK_LNG]);
-        setLocationReady(true);
-      },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
-    );
+    });
   }, []);
 
   const setManualLocation = useCallback((lat: number, lng: number, cep: string) => {
@@ -64,29 +93,9 @@ export function LocationProvider({ children }: { children: ReactNode }) {
   const resetToGps = useCallback(() => {
     setCepApplied(null);
     setLocationSource('gps');
-
-    if (!('geolocation' in navigator)) {
-      setUserLocation([FALLBACK_LAT, FALLBACK_LNG]);
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        let lat = position.coords.latitude;
-        let lng = position.coords.longitude;
-
-        if (!isCoordInBrasil(lat, lng) || position.coords.accuracy > 50000) {
-          lat = FALLBACK_LAT;
-          lng = FALLBACK_LNG;
-        }
-
-        setUserLocation([lat, lng]);
-      },
-      () => {
-        setUserLocation([FALLBACK_LAT, FALLBACK_LNG]);
-      },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
-    );
+    getCurrentLocation().then((coords) => {
+      setUserLocation(coords);
+    });
   }, []);
 
   return (

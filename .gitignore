@@ -58,3 +58,9 @@ coverage/
 
 # Build output
 frontend-app/dist/
+
+# Android / Capacitor
+frontend-app/android/app/build/
+*.apk
+*.aab
+*.keystore
