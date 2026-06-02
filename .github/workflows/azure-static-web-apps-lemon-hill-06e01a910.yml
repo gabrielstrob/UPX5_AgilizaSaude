@@ -43,6 +43,10 @@ jobs:
           echo "VITE_SUPABASE_URL=${{ vars.VITE_SUPABASE_URL }}" > .env
           echo "VITE_SUPABASE_ANON_KEY=${{ secrets.VITE_SUPABASE_ANON_KEY }}" >> .env
           echo "VITE_API_URL=${{ vars.VITE_API_URL }}" >> .env
+          echo "--- checking .env ---"
+          grep -c "VITE_SUPABASE_URL=." .env && echo "URL OK" || echo "URL EMPTY"
+          grep -c "VITE_SUPABASE_ANON_KEY=." .env && echo "KEY OK" || echo "KEY EMPTY"
+          grep -c "VITE_API_URL=." .env && echo "API OK" || echo "API EMPTY"
           npx vite build
           cp staticwebapp.config.json dist/
           echo "--- dist contents ---"
