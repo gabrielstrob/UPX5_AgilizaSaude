@@ -101,7 +101,8 @@ make setup
 
 # Iniciar servidor
 make run
-# ou: venv\Scripts\python -m uvicorn app.main:app --reload
+# ou
+venv\Scripts\python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 # Popular banco com dados de teste
 make seed
@@ -116,7 +117,7 @@ Docs interativa em `http://localhost:8000/docs`
 ```bash
 cd frontend-app
 npm install
-npm run dev
+npm run dev -- --host
 ```
 
 App disponível em `http://localhost:5173`
