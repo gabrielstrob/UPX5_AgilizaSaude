@@ -40,9 +40,9 @@ jobs:
         run: |
           cd frontend-app
           npm install
-          echo "VITE_SUPABASE_URL=${{ secrets.VITE_SUPABASE_URL }}" > .env
+          echo "VITE_SUPABASE_URL=${{ vars.VITE_SUPABASE_URL }}" > .env
           echo "VITE_SUPABASE_ANON_KEY=${{ secrets.VITE_SUPABASE_ANON_KEY }}" >> .env
-          echo "VITE_API_URL=${{ secrets.VITE_API_URL }}" >> .env
+          echo "VITE_API_URL=${{ vars.VITE_API_URL }}" >> .env
           npx vite build
           cp staticwebapp.config.json dist/
           echo "--- dist contents ---"
