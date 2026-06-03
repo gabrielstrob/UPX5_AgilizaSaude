@@ -3,7 +3,7 @@
 ## Pré-requisitos
 
 - [Azure CLI](https://learn.microsoft.com/pt-br/cli/azure/install-azure-cli) instalado
-- Docker instalado (para build local, opcional)
+- Docker instalado
 - Conta Azure com subscription ativa
 - Node.js 20+
 
@@ -14,9 +14,7 @@
 ```bash
 az login
 
-az group create \
-  --name upx-v \
-  --location eastus
+az group create --name upx-v --location eastus
 ```
 
 ---
@@ -24,11 +22,7 @@ az group create \
 ## 2. Azure Container Registry (ACR)
 
 ```bash
-az acr create \
-  --name odontojaacr \
-  --resource-group upx-v \
-  --sku Basic \
-  --admin-enabled true
+az acr create --name odontojaacr --resource-group upx-v --sku Basic --admin-enabled true
 ```
 
 Aguarde a criação. Anote o **login server** (ex: `odontojaacr.azurecr.io`):
@@ -37,23 +31,18 @@ Aguarde a criação. Anote o **login server** (ex: `odontojaacr.azurecr.io`):
 az acr show --name odontojaacr --query loginServer --output tsv
 ```
 
-### 2.1 Build e push da imagem
+### 2.1 Build e push da imagem (local)
 
 ```bash
 cd backend-api
 
-az acr build \
-  --image odontoja-api:latest \
-  --registry odontojaacr \
-  --file Dockerfile .
+az acr login --name odontojaacr
+docker build -t odontojaacr.azurecr.io/odontoja-api:latest .
+docker push odontojaacr.azurecr.io/odontoja-api:latest
 ```
 
-> Se não tiver o `az acr build`, faça build local com Docker:
-> ```bash
-> az acr login --name odontojaacr
-> docker build -t odontojaacr.azurecr.io/odontoja-api:latest .
-> docker push odontojaacr.azurecr.io/odontoja-api:latest
-> ```
+> **Nota:** O `az acr build` pode falhar com erro `TasksOperationsNotAllowed` dependendo
+> do tipo de subscription. Nesse caso, use build local com Docker + push como acima.
 
 ---
 
@@ -68,74 +57,58 @@ az provider register --namespace Microsoft.App
 ### 3.2 Criar ambiente
 
 ```bash
-az containerapp env create \
-  --name odontoja-env \
-  --resource-group upx-v \
-  --location eastus
+az containerapp env create --name odontoja-env --resource-group upx-v --location eastus
 ```
 
 ### 3.3 Criar o Container App
 
-Substitua os valores das variáveis com seus dados reais do Supabase/Google:
+```powershell
+$acrPassword = az acr credential show --name odontojaacr --query passwords[0].value -o tsv
 
-```bash
-az containerapp create \
-  --name odontoja-api \
-  --resource-group upx-v \
-  --environment odontoja-env \
-  --image odontojaacr.azurecr.io/odontoja-api:latest \
-  --registry-identity system \
-  --registry-server odontojaacr.azurecr.io \
-  --env-vars \
-    "DATABASE_URL=postgresql://postgres.[PROJECT_ID]:[PASSWORD]@aws-0-us-east-1.pooler.supabase.com:5432/postgres" \
-    "GOOGLE_PLACES_API_KEY=sua_google_api_key" \
-    "SUPABASE_URL=https://seu-projeto.supabase.co" \
-    "SUPABASE_ANON_KEY=sua_supabase_anon_key" \
-  --ingress external \
-  --target-port 8000 \
-  --cpu 0.25 \
-  --memory 0.5Gi \
-  --min-replicas 1 \
-  --max-replicas 3
+az containerapp create `
+  --name odontoja-api `
+  --resource-group upx-v `
+  --image odontojaacr.azurecr.io/odontoja-api:latest `
+  --registry-server odontojaacr.azurecr.io `
+  --registry-username odontojaacr `
+  --registry-password $acrPassword `
+  --environment odontoja-env `
+  --ingress external `
+  --target-port 8000 `
+  --cpu 0.25 `
+  --memory 0.5Gi
 ```
 
-> Se der erro de autenticação no ACR, use credenciais admin:
-> ```bash
-> ACR_PASSWORD=$(az acr credential show --name odontojaacr --query passwords[0].value --output tsv)
->
-> az containerapp create \
->   --name odontoja-api \
->   --resource-group upx-v \
->   --environment odontoja-env \
->   --image odontojaacr.azurecr.io/odontoja-api:latest \
->   --registry-server odontojaacr.azurecr.io \
->   --registry-username odontojaacr \
->   --registry-password $ACR_PASSWORD \
->   --env-vars \
->     "DATABASE_URL=sua_database_url" \
->     "GOOGLE_PLACES_API_KEY=sua_key" \
->     "SUPABASE_URL=https://seu-projeto.supabase.co" \
->     "SUPABASE_ANON_KEY=sua_key" \
->   --ingress external \
->   --target-port 8000
-> ```
+> **Nota:** Não use `--registry-identity system` — pode falhar com erro de permissão.
+> Use credenciais admin do ACR conforme acima.
 
-### 3.4 Obter a URL da API
+### 3.4 Adicionar variáveis de ambiente
+
+Substitua os valores com seus dados reais do Supabase/Google:
+
+```powershell
+az containerapp update `
+  --name odontoja-api `
+  --resource-group upx-v `
+  --set-env-vars `
+    "DATABASE_URL=postgresql://postgres.[PROJECT_ID]:[PASSWORD]@aws-0-us-east-1.pooler.supabase.com:5432/postgres" `
+    "GOOGLE_PLACES_API_KEY=sua_google_api_key" `
+    "SUPABASE_URL=https://seu-projeto.supabase.co" `
+    "SUPABASE_ANON_KEY=sua_supabase_anon_key"
+```
+
+### 3.5 Obter a URL da API
 
 ```bash
-az containerapp show \
-  --name odontoja-api \
-  --resource-group upx-v \
-  --query properties.configuration.ingress.fqdn \
-  --output tsv
+az containerapp show --name odontoja-api --resource-group upx-v --query properties.configuration.ingress.fqdn --output tsv
 ```
 
 Anote a URL (ex: `odontoja-api.politedesert-eastus.azurecontainerapps.io`).
 
-### 3.5 Testar
+### 3.6 Testar
 
 ```bash
-curl https://odontoja-api.thankfulbay-b13deea5.eastus.azurecontainerapps.io/
+curl https://<seu-fqdn>/
 # Deve retornar: {"message":"OdontoJá API está online!"}
 ```
 
@@ -145,15 +118,11 @@ curl https://odontoja-api.thankfulbay-b13deea5.eastus.azurecontainerapps.io/
 
 Depois de obter a URL do frontend (passo 5), adicione a variável de ambiente:
 
-```bash
-az containerapp update \
-  --name odontoja-api \
-  --resource-group upx-v \
-  --set-env-vars \
-    "DATABASE_URL=sua_database_url" \
-    "GOOGLE_PLACES_API_KEY=sua_key" \
-    "SUPABASE_URL=https://seu-projeto.supabase.co" \
-    "SUPABASE_ANON_KEY=sua_key" \
+```powershell
+az containerapp update `
+  --name odontoja-api `
+  --resource-group upx-v `
+  --set-env-vars `
     "AZURE_STATIC_WEB_APP_URL=https://seu-app.azurestaticapps.net"
 ```
 
@@ -161,27 +130,14 @@ az containerapp update \
 
 ## 5. Azure Static Web Apps (Frontend Web)
 
-### 5.1 Criar via CLI
+### 5.1 Criar via Portal
 
-```bash
-az staticwebapp create \
-  --name odontoja-web \
-  --resource-group upx-v \
-  --source . \
-  --branch main \
-  --app-location "frontend-app" \
-  --output-location "dist" \
-  --build-custom-command "npm run build" \
-  --sku Free
-```
-
-> Ou conecte o repositório GitHub pelo portal:
-> 1. Vá em **Azure Portal > Create a resource > Static Web App**
-> 2. Conecte sua conta GitHub e selecione o repositório
-> 3. Build preset: **Custom**
-> 4. App location: `frontend-app`
-> 5. Output location: `dist`
-> 6. Build command: `npm run build`
+1. Vá em **Azure Portal > Create a resource > Static Web App**
+2. Conecte sua conta GitHub e selecione o repositório
+3. Build preset: **Custom**
+4. App location: `frontend-app`
+5. Output location: `dist`
+6. Build command: `npm run build`
 
 ### 5.2 Configurar variáveis de ambiente do frontend
 
@@ -191,14 +147,16 @@ No Azure Portal > Static Web App > **Configuration > App settings**:
 |---|---|
 | `VITE_SUPABASE_URL` | `https://seu-projeto.supabase.co` |
 | `VITE_SUPABASE_ANON_KEY` | sua anon key do Supabase |
-| `VITE_API_URL` | `https://odontoja-api.xxx.azurecontainerapps.net/api` |
+| `VITE_API_URL` | `https://<seu-fqdn>/api` |
 
-> **Importante:** Como o Vite injeta variáveis em build-time, se usar CI/CD do GitHub, configure essas variáveis como **secrets** no repositório GitHub e referencie no workflow. Se deploy manual, use:
-> ```bash
+> **Importante:** Como o Vite injeta variáveis em build-time, se usar CI/CD do GitHub,
+> configure essas variáveis como **secrets** no repositório GitHub e referencie no workflow.
+> Se deploy manual:
+> ```powershell
 > cd frontend-app
-> VITE_API_URL=https://odontoja-api.xxx.azurecontainerapps.net/api \
-> VITE_SUPABASE_URL=https://seu-projeto.supabase.co \
-> VITE_SUPABASE_ANON_KEY=sua_key \
+> $env:VITE_API_URL = "https://<seu-fqdn>/api"
+> $env:VITE_SUPABASE_URL = "https://seu-projeto.supabase.co"
+> $env:VITE_SUPABASE_ANON_KEY = "sua_key"
 > npm run build
 > npx cap sync android
 > ```
@@ -209,15 +167,14 @@ No Azure Portal > Static Web App > **Configuration > App settings**:
 
 Após a API estar no ar, gere o APK apontando para a URL de produção:
 
-```bash
+```powershell
 cd frontend-app
 
 # Configurar .env de produção
-# VITE_API_URL=https://odontoja-api.xxx.azurecontainerapps.net/api
+# VITE_API_URL=https://<seu-fqdn>/api
 # VITE_SUPABASE_URL=https://seu-projeto.supabase.co
 # VITE_SUPABASE_ANON_KEY=sua_key
 
-# Build e sync
 npm run build
 npx cap sync android
 
@@ -233,12 +190,12 @@ cd android
 
 ### 7.1 Criar keystore
 
-```bash
-keytool -genkey -v \
-  -keystore odontoja-release.keystore \
-  -alias odontoja \
-  -keyalg RSA \
-  -keysize 2048 \
+```powershell
+keytool -genkey -v `
+  -keystore odontoja-release.keystore `
+  -alias odontoja `
+  -keyalg RSA `
+  -keysize 2048 `
   -validity 10000
 ```
 
@@ -285,10 +242,23 @@ keyPassword=SUA_SENHA
 
 ### 7.4 Gerar APK assinado
 
-```bash
+```powershell
 cd frontend-app/android
 ./gradlew assembleRelease
 # APK: android/app/build/outputs/apk/release/app-release.apk
+```
+
+---
+
+## 8. Subir nova versão do backend
+
+```powershell
+cd backend-api
+
+az acr login --name odontojaacr
+docker build -t odontojaacr.azurecr.io/odontoja-api:latest .
+docker push odontojaacr.azurecr.io/odontoja-api:latest
+az containerapp update --name odontoja-api --resource-group upx-v --image odontojaacr.azurecr.io/odontoja-api:latest
 ```
 
 ---

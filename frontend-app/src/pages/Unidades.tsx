@@ -148,9 +148,9 @@ export default function Unidades() {
               <div className="flex-1">
                 <div className="flex justify-between items-start mb-2">
                   <h3 className="font-h2 text-[18px] text-on-surface leading-tight pr-2">{clinica.nome}</h3>
-                  <div className={`px-2.5 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 shrink-0 ${clinica.aberto_24h ? 'bg-surface-container-high text-primary' : 'bg-surface-container text-outline'}`}>
-                  <span className={`w-2 h-2 rounded-full block ${clinica.aberto_24h ? 'bg-primary' : 'bg-outline'}`}></span>
-                  {clinica.aberto_24h ? '24 Horas' : 'Aberto'}
+                  <div className={`px-2.5 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 shrink-0 ${clinica.aberto_24h || clinica.status_funcionamento === 'Aberta' ? 'bg-surface-container-high text-primary' : 'bg-error-container text-on-error-container'}`}>
+                  <span className={`w-2 h-2 rounded-full block ${clinica.aberto_24h || clinica.status_funcionamento === 'Aberta' ? 'bg-primary' : 'bg-error'}`}></span>
+                  {clinica.aberto_24h ? '24 Horas' : clinica.status_funcionamento}
                 </div>
               </div>
               

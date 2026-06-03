@@ -72,7 +72,8 @@ export default function Mapa() {
   const [cepError, setCepError] = useState<string | null>(null);
   const [cepLoading, setCepLoading] = useState(false);
 
-  const activeClinica = manualSelection || (clinicas.length > 0 ? clinicas[0] : null);
+  const nearestOpen = clinicas.find(c => c.aberto_24h || c.status_funcionamento === 'Aberta') || (clinicas.length > 0 ? clinicas[0] : null);
+  const activeClinica = manualSelection || nearestOpen;
 
   if (loading || !userLocation) {
     return (
@@ -247,9 +248,9 @@ export default function Mapa() {
                       {activeClinica.distancia_km} km de distância
                     </p>
                   </div>
-                  <div className={`shrink-0 px-2.5 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 ${activeClinica.aberto_24h ? 'bg-surface-container-high text-primary' : 'bg-surface-container text-outline'}`}>
-                    <span className={`w-2 h-2 rounded-full block ${activeClinica.aberto_24h ? 'bg-primary' : 'bg-outline'}`}></span>
-                    {activeClinica.aberto_24h ? '24 Horas' : 'Aberto'}
+                  <div className={`shrink-0 px-2.5 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 ${activeClinica.aberto_24h || activeClinica.status_funcionamento === 'Aberta' ? 'bg-surface-container-high text-primary' : 'bg-error-container text-on-error-container'}`}>
+                    <span className={`w-2 h-2 rounded-full block ${activeClinica.aberto_24h || activeClinica.status_funcionamento === 'Aberta' ? 'bg-primary' : 'bg-error'}`}></span>
+                    {activeClinica.aberto_24h ? '24 Horas' : activeClinica.status_funcionamento}
                   </div>
                 </div>
                 <div className="flex items-center gap-4 py-stack-sm border-t border-outline-variant/20 border-b mb-stack-md">

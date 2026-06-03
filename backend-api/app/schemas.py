@@ -34,6 +34,7 @@ class ClinicaResponse(ClinicaBase):
     lotacao_status: Optional[str] = None
     lotacao_nivel: Optional[int] = None
     lotacao_atualizada_em: Optional[datetime] = None
+    status_funcionamento: str = "Fechada"
 
     class Config:
         from_attributes = True

@@ -12,6 +12,78 @@ from sqlalchemy import text
 from uuid import UUID
 
 import_datetime = __import__("datetime")
+import re
+
+def calcular_status_funcionamento(aberto_24h, horarios):
+    if aberto_24h:
+        return "Aberta"
+
+    if not horarios:
+        return "Fechada"
+
+    now = import_datetime.datetime.now()
+    weekday = now.weekday()
+    current_minutes = now.hour * 60 + now.minute
+
+    day_numbers = {
+        'segunda': 0, 'terca': 1, 'terça': 1, 'quarta': 2,
+        'quinta': 3, 'sexta': 4, 'sabado': 5, 'sábado': 5, 'domingo': 6
+    }
+
+    today_value = None
+
+    for key, value in horarios.items():
+        k = key.lower().strip()
+        k = re.sub(r'\s*-\s*feira\s*', '', k).strip()
+
+        range_match = re.match(r'^(\w+)\s*_\s*a+\s*_\s*(\w+)$', k)
+        if range_match:
+            start = day_numbers.get(range_match.group(1))
+            end = day_numbers.get(range_match.group(2))
+            if start is not None and end is not None and start <= weekday <= end:
+                today_value = value
+                break
+            continue
+
+        if 'todos' in k:
+            today_value = value
+            break
+
+        day_num = day_numbers.get(k)
+        if day_num is not None and day_num == weekday:
+            today_value = value
+            break
+
+    if today_value is None:
+        return "Fechada"
+
+    val = str(today_value).strip()
+
+    if not val or val.lower() == 'fechado':
+        return "Fechada"
+
+    if '24' in val:
+        return "Aberta"
+
+    if 'urgência' in val.lower() or 'urgencia' in val.lower():
+        return "Aberta"
+
+    normalized = val.replace('–', '-').replace('—', '-')
+    parts = re.split(r'\s*-\s*|\s+às\s+', normalized)
+
+    if len(parts) >= 2:
+        try:
+            h_s, m_s = parts[0].strip().split(':')
+            h_e, m_e = parts[-1].strip().split(':')
+            start_min = int(h_s) * 60 + int(m_s)
+            end_min = int(h_e) * 60 + int(m_e)
+
+            if start_min <= current_minutes <= end_min:
+                return "Aberta"
+        except (ValueError, IndexError):
+            pass
+
+    return "Fechada"
 
 def calcular_lotacao_mock():
     # Retorna o status e o nível de lotação com base no horário atual.
@@ -148,7 +220,8 @@ def get_clinicas_proximas(db: Session, lat: float, lng: float, raio_km: float = 
             "distancia_km": round(row.distancia_km, 2),
             "lotacao_status": status_lotacao,
             "lotacao_nivel": nivel_lotacao,
-            "lotacao_atualizada_em": row.lotacao_atualizada_em
+            "lotacao_atualizada_em": row.lotacao_atualizada_em,
+            "status_funcionamento": calcular_status_funcionamento(row.aberto_24h, row.horarios)
         }
         resultados.append(schemas.ClinicaResponse(**clinica_dict))
     
@@ -236,7 +309,8 @@ def get_clinica_por_id(db: Session, clinica_id: UUID):
         "distancia_km": 0.0,
         "lotacao_status": status_lotacao,
         "lotacao_nivel": nivel_lotacao,
-        "lotacao_atualizada_em": row.lotacao_atualizada_em
+        "lotacao_atualizada_em": row.lotacao_atualizada_em,
+        "status_funcionamento": calcular_status_funcionamento(row.aberto_24h, row.horarios)
     }
     return schemas.ClinicaResponse(**clinica_dict)
 
@@ -286,7 +360,8 @@ def get_todas_clinicas(db: Session):
             "distancia_km": 0.0,
             "lotacao_status": status_lotacao,
             "lotacao_nivel": nivel_lotacao,
-            "lotacao_atualizada_em": row.lotacao_atualizada_em
+            "lotacao_atualizada_em": row.lotacao_atualizada_em,
+            "status_funcionamento": calcular_status_funcionamento(row.aberto_24h, row.horarios)
         }
         clinicas.append(schemas.ClinicaResponse(**clinica_dict))
     return clinicas

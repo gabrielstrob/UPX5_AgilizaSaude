@@ -94,14 +94,23 @@ export default function Detalhes() {
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-inverse-surface/90 via-inverse-surface/40 to-transparent"></div>
           <div className="absolute bottom-0 left-0 w-full p-container-padding">
-            <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-stack-sm ${clinica.aberto_24h ? 'bg-primary' : 'bg-surface-container'}`}>
-              <span className={`material-symbols-outlined text-sm ${clinica.aberto_24h ? 'text-on-primary' : 'text-on-surface'}`} style={{ fontVariationSettings: "'FILL' 1" }}>
-                {clinica.aberto_24h ? 'verified' : 'info'}
-              </span>
-              <span className={`font-label-caps text-label-caps ${clinica.aberto_24h ? 'text-on-primary' : 'text-on-surface'}`}>
-                {clinica.aberto_24h ? '24 Horas' : 'Horário Fixo'}
-              </span>
-            </div>
+            {(() => {
+              const isOpen = clinica.aberto_24h || clinica.status_funcionamento === 'Aberta';
+              const bg = clinica.aberto_24h ? 'bg-primary' : isOpen ? 'bg-primary' : 'bg-error-container';
+              const textColor = clinica.aberto_24h ? 'text-on-primary' : isOpen ? 'text-on-primary' : 'text-on-error-container';
+              const icon = clinica.aberto_24h ? 'verified' : isOpen ? 'check_circle' : 'cancel';
+              const label = clinica.aberto_24h ? '24 Horas' : isOpen ? 'Aberta agora' : 'Fechada';
+              return (
+                <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-stack-sm ${bg}`}>
+                  <span className={`material-symbols-outlined text-sm ${textColor}`} style={{ fontVariationSettings: "'FILL' 1" }}>
+                    {icon}
+                  </span>
+                  <span className={`font-label-caps text-label-caps ${textColor}`}>
+                    {label}
+                  </span>
+                </div>
+              );
+            })()}
             <h1 className="font-h1 text-h1 text-white mb-unit drop-shadow-md">{clinica.nome}</h1>
             <p className="font-body-md text-body-md text-white/90 flex items-center gap-2 drop-shadow-sm">
               <span className="material-symbols-outlined text-lg">location_on</span>
